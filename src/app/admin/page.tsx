@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -24,21 +25,33 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from '@/components/ui/dialog';
-import { Plus, Settings, Trash2, Edit2, LayoutDashboard, Ticket } from 'lucide-react';
-import { useCollection, useFirestore } from '@/firebase';
+import { Plus, Settings, Trash2, Edit2, LayoutDashboard, Ticket, LogOut } from 'lucide-react';
+import { useCollection, useFirestore, useUser, useAuth } from '@/firebase';
 import { collection, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { signOut } from 'firebase/auth';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function AdminPage() {
+  const { user, loading: userLoading } = useUser();
+  const auth = useAuth();
   const db = useFirestore();
+  const router = useRouter();
   
+  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
+  useEffect(() => {
+    if (!userLoading && (!user || user.email !== adminEmail)) {
+      router.push('/admin/login');
+    }
+  }, [user, userLoading, router, adminEmail]);
+
   const rafflesQuery = useMemo(() => {
     if (!db) return null;
     return collection(db, 'raffles');
   }, [db]);
 
-  const { data: raffles, loading } = useCollection(rafflesQuery);
+  const { data: raffles, loading: rafflesLoading } = useCollection(rafflesQuery);
   
   const [newRaffle, setNewRaffle] = useState({
     title: '',
@@ -60,7 +73,6 @@ export default function AdminPage() {
       soldTickets: 0,
       status: 'active',
       createdAt: serverTimestamp(),
-      images: [newRaffle.imageUrl]
     };
 
     addDoc(collection(db, 'raffles'), data)
@@ -99,6 +111,21 @@ export default function AdminPage() {
     }
   };
 
+  const handleLogout = async () => {
+    if (auth) {
+      await signOut(auth);
+      router.push('/admin/login');
+    }
+  };
+
+  if (userLoading || !user || user.email !== adminEmail) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Navbar />
@@ -111,74 +138,80 @@ export default function AdminPage() {
                 <LayoutDashboard className="text-primary w-8 h-8" />
                 Panel de Administración
               </h1>
-              <p className="text-muted-foreground">Gestiona tus sorteos, precios y participantes.</p>
+              <p className="text-muted-foreground">Sesión iniciada como: <span className="font-bold text-slate-900">{user.email}</span></p>
             </div>
 
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="bg-primary text-white h-12 px-6 rounded-xl font-bold flex items-center gap-2">
-                  <Plus className="w-5 h-5" />
-                  Nuevo Sorteo
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px] bg-white">
-                <DialogHeader>
-                  <DialogTitle>Crear Sorteo</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="title">Título del Sorteo</Label>
-                    <Input 
-                      id="title" 
-                      placeholder="Ej: Porsche 911 Carrera" 
-                      value={newRaffle.title}
-                      onChange={(e) => setNewRaffle({...newRaffle, title: e.target.value})}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
+            <div className="flex gap-4">
+              <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2">
+                <LogOut className="w-4 h-4" />
+                Cerrar Sesión
+              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button className="bg-primary text-white h-12 px-6 rounded-xl font-bold flex items-center gap-2">
+                    <Plus className="w-5 h-5" />
+                    Nuevo Sorteo
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px] bg-white">
+                  <DialogHeader>
+                    <DialogTitle>Crear Sorteo</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="price">Precio por Ticket</Label>
+                      <Label htmlFor="title">Título del Sorteo</Label>
                       <Input 
-                        id="price" 
-                        type="number" 
-                        placeholder="2500" 
-                        value={newRaffle.ticketPrice}
-                        onChange={(e) => setNewRaffle({...newRaffle, ticketPrice: e.target.value})}
+                        id="title" 
+                        placeholder="Ej: Porsche 911 Carrera" 
+                        value={newRaffle.title}
+                        onChange={(e) => setNewRaffle({...newRaffle, title: e.target.value})}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="price">Precio por Ticket</Label>
+                        <Input 
+                          id="price" 
+                          type="number" 
+                          placeholder="2500" 
+                          value={newRaffle.ticketPrice}
+                          onChange={(e) => setNewRaffle({...newRaffle, ticketPrice: e.target.value})}
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="tickets">Tickets Totales</Label>
+                        <Input 
+                          id="tickets" 
+                          type="number" 
+                          placeholder="1000" 
+                          value={newRaffle.maxTickets}
+                          onChange={(e) => setNewRaffle({...newRaffle, maxTickets: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="date">Fecha del Sorteo</Label>
+                      <Input 
+                        id="date" 
+                        type="datetime-local" 
+                        value={newRaffle.drawDate}
+                        onChange={(e) => setNewRaffle({...newRaffle, drawDate: e.target.value})}
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="tickets">Tickets Totales</Label>
-                      <Input 
-                        id="tickets" 
-                        type="number" 
-                        placeholder="1000" 
-                        value={newRaffle.maxTickets}
-                        onChange={(e) => setNewRaffle({...newRaffle, maxTickets: e.target.value})}
+                      <Label htmlFor="desc">Descripción</Label>
+                      <Textarea 
+                        id="desc" 
+                        placeholder="Detalles del premio..." 
+                        value={newRaffle.description}
+                        onChange={(e) => setNewRaffle({...newRaffle, description: e.target.value})}
                       />
                     </div>
+                    <Button onClick={handleAddRaffle} className="w-full mt-4 bg-primary text-white">Guardar Sorteo</Button>
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="date">Fecha del Sorteo</Label>
-                    <Input 
-                      id="date" 
-                      type="datetime-local" 
-                      value={newRaffle.drawDate}
-                      onChange={(e) => setNewRaffle({...newRaffle, drawDate: e.target.value})}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="desc">Descripción</Label>
-                    <Textarea 
-                      id="desc" 
-                      placeholder="Detalles del premio..." 
-                      value={newRaffle.description}
-                      onChange={(e) => setNewRaffle({...newRaffle, description: e.target.value})}
-                    />
-                  </div>
-                  <Button onClick={handleAddRaffle} className="w-full mt-4 bg-primary text-white">Guardar Sorteo</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 mb-12">
@@ -230,7 +263,7 @@ export default function AdminPage() {
                 </TableRow>
               </TableHeader>
               <TableBody className="bg-white">
-                {loading ? (
+                {rafflesLoading ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">Cargando sorteos...</TableCell>
                   </TableRow>

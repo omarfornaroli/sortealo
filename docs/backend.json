@@ -18,15 +18,28 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["title", "ticketPrice", "maxTickets", "drawDate"]
+    },
+    "AdminSettings": {
+      "title": "Admin Settings",
+      "description": "System settings for administration.",
+      "type": "object",
+      "properties": {
+        "isInitialized": { "type": "boolean" },
+        "setupDate": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": {
-    "providers": ["google.com"]
+    "providers": ["google.com", "password"]
   },
   "firestore": {
     "/raffles/{raffleId}": {
       "schema": "Raffle",
       "description": "Collection of available raffles."
+    },
+    "/settings/admin": {
+      "schema": "AdminSettings",
+      "description": "Global admin configuration."
     }
   }
 }
