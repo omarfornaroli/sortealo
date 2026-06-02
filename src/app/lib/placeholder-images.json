@@ -1,0 +1,35 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "car-prize",
+      "description": "Luxury sports car prize",
+      "imageUrl": "https://picsum.photos/seed/elite-car/1200/800",
+      "imageHint": "sports car"
+    },
+    {
+      "id": "moto-prize",
+      "description": "High-end motorcycle prize",
+      "imageUrl": "https://picsum.photos/seed/elite-moto/1200/800",
+      "imageHint": "motorcycle bike"
+    },
+    {
+      "id": "laptop-prize",
+      "description": "Professional high-end notebook",
+      "imageUrl": "https://picsum.photos/seed/elite-tech/1200/800",
+      "imageHint": "laptop computer"
+    },
+    {
+      "id": "phone-prize",
+      "description": "Latest flagship smartphone",
+      "imageUrl": "https://picsum.photos/seed/elite-phone/1200/800",
+      "imageHint": "smartphone mobile"
+    },
+    {
+      "id": "hero-bg",
+      "description": "Luxury lifestyle background",
+      "imageUrl": "https://picsum.photos/seed/elite-bg/1920/1080",
+      "imageHint": "luxury background"
+    }
+  ]
+}
