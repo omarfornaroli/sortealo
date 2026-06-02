@@ -31,6 +31,7 @@ async function handleLogout() {
 export default async function AdminPage() {
   const session = await getSession();
   
+  // Verificación extra de sesión en el servidor para evitar flashes o errores de middleware
   if (!session) {
     redirect('/admin/login');
   }
@@ -49,7 +50,7 @@ export default async function AdminPage() {
           </Link>
           <div className="flex items-center gap-6">
             <div className="hidden md:flex flex-col items-end">
-              <span className="text-xs font-bold text-slate-900">{session.email}</span>
+              <span className="text-xs font-bold text-slate-900">{session.email as string}</span>
               <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Administrador</span>
             </div>
             <form action={handleLogout}>

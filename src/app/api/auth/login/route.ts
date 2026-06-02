@@ -4,6 +4,7 @@ import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import { encrypt } from '@/lib/session';
+import { cookies } from 'next/headers';
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,18 +40,17 @@ export async function POST(req: NextRequest) {
     // Crear el token de sesión
     const sessionToken = await encrypt({ id: user._id.toString(), email: user.email });
     
-    // Crear respuesta con la cookie seteada directamente
-    const response = NextResponse.json({ message: 'Sesión iniciada correctamente' }, { status: 200 });
-    
-    response.cookies.set('session', sessionToken, {
+    // Establecer la cookie usando next/headers para máxima compatibilidad con el servidor
+    const cookieStore = await cookies();
+    cookieStore.set('session', sessionToken, {
       httpOnly: true,
-      secure: false, // Importante para desarrollo en Workstations
+      secure: false, // Necesario para entornos de desarrollo/workstations
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 7, // 7 días
     });
 
-    return response;
+    return NextResponse.json({ message: 'Sesión iniciada correctamente' }, { status: 200 });
   } catch (error: any) {
     console.error('Error en login API:', error);
     return NextResponse.json({ message: 'Error interno al iniciar sesión' }, { status: 500 });
