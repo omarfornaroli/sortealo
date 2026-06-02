@@ -3,7 +3,7 @@ import 'server-only';
 import { JWTPayload, SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
-const secretKey = process.env.SESSION_SECRET;
+const secretKey = process.env.SESSION_SECRET || 'fallback-secret-key-for-dev-12345';
 const encodedKey = new TextEncoder().encode(secretKey);
 
 export async function encrypt(payload: JWTPayload) {
@@ -15,13 +15,14 @@ export async function encrypt(payload: JWTPayload) {
 }
 
 export async function decrypt(session: string | undefined = '') {
+  if (!session) return null;
   try {
     const { payload } = await jwtVerify(session, encodedKey, {
       algorithms: ['HS256'],
     });
     return payload;
   } catch (error) {
-    console.log('Failed to verify session');
+    console.error('Failed to verify session:', error);
     return null;
   }
 }
@@ -30,21 +31,25 @@ export async function createSession(payload: JWTPayload) {
   const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const session = await encrypt(payload);
 
-  cookies().set('session', session, {
+  const cookieStore = await cookies();
+  cookieStore.set('session', session, {
     expires,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
     path: '/',
   });
 }
 
 export async function getSession() {
-  const session = cookies().get('session')?.value;
+  const cookieStore = await cookies();
+  const session = cookieStore.get('session')?.value;
   return await decrypt(session);
 }
 
 export async function updateSession() {
-  const session = cookies().get('session')?.value;
+  const cookieStore = await cookies();
+  const session = cookieStore.get('session')?.value;
   const payload = await decrypt(session);
 
   if (!session || !payload) {
@@ -52,14 +57,16 @@ export async function updateSession() {
   }
 
   const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-  cookies().set('session', session, {
+  cookieStore.set('session', session, {
     expires,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
     path: '/',
   });
 }
 
-export function deleteSession() {
-  cookies().delete('session');
+export async function deleteSession() {
+  const cookieStore = await cookies();
+  cookieStore.delete('session');
 }
