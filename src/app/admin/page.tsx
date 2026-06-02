@@ -9,7 +9,9 @@ import { redirect } from 'next/navigation';
 import { AdminRaffleList } from '@/components/admin/AdminRaffleList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+// Forzamos renderizado dinámico para que la verificación de sesión sea siempre fresca
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 async function getStats() {
   try {
@@ -46,7 +48,10 @@ async function handleLogout() {
 export default async function AdminPage() {
   const session = await getSession();
   
+  console.log('--- ADMIN PAGE RENDER: SESIÓN DETECTADA: ---', session?.email);
+
   if (!session) {
+    console.log('--- ADMIN PAGE RENDER: REDIRIGIENDO POR FALTA DE SESIÓN ---');
     redirect('/auth/login');
   }
 
@@ -93,7 +98,6 @@ export default async function AdminPage() {
           </Button>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {[
             { label: 'Sorteos Totales', value: stats.totalRaffles, icon: TicketIcon, color: 'blue' },
@@ -103,7 +107,7 @@ export default async function AdminPage() {
           ].map((stat, i) => (
             <div key={i} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40">
               <div className="flex items-center gap-5">
-                <div className={`p-4 bg-${stat.color}-50 rounded-2xl text-${stat.color}-600`}>
+                <div className={`p-4 bg-slate-50 rounded-2xl text-primary`}>
                   <stat.icon className="w-6 h-6" />
                 </div>
                 <div>

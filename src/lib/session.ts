@@ -24,9 +24,11 @@ export async function decrypt(session: string | undefined = '') {
     const { payload } = await jwtVerify(session, getEncodedKey(), {
       algorithms: ['HS256'],
     });
+    console.log('--- DECRYPT EXITOSO ---');
     return payload;
-  } catch (error) {
-    // Si hay un error de desencriptación, devolvemos null para forzar relogin
+  } catch (error: any) {
+    console.error('--- ERROR DE DECRYPT DE SESIÓN ---');
+    console.error('Mensaje:', error.message);
     return null;
   }
 }
@@ -35,9 +37,13 @@ export async function getSession() {
   try {
     const cookieStore = await cookies();
     const session = cookieStore.get('session')?.value;
-    if (!session) return null;
+    if (!session) {
+      console.log('--- GET SESSION: NO HAY COOKIE ---');
+      return null;
+    }
     return await decrypt(session);
   } catch (e) {
+    console.error('--- GET SESSION: ERROR CRITICO ---', e);
     return null;
   }
 }
