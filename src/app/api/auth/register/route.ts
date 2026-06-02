@@ -2,42 +2,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
+import { sendEmail } from '@/lib/email';
+import crypto from 'crypto';
 
 export async function POST(req: NextRequest) {
   await dbConnect();
-
-  const adminEmail = process.env.ADMIN_EMAIL;
-  if (!adminEmail) {
-    return NextResponse.json({ message: 'Admin email not configured in environment' }, { status: 500 });
-  }
-
-  // Verificar si ya existe algún usuario
-  const userCount = await User.countDocuments();
-  if (userCount > 0) {
-    return NextResponse.json({ message: 'Admin already exists' }, { status: 400 });
-  }
-
-  const { email, password } = await req.json();
-
-  if (email !== adminEmail) {
-    return NextResponse.json({ message: 'Este email no está autorizado para ser administrador' }, { status: 403 });
-  }
+  const { email } = await req.json();
 
   try {
-    const newUser = new User({ 
-      email, 
-      password, 
-      isVerified: true 
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return NextResponse.json({ message: 'Este email ya está registrado o en proceso.' }, { status: 400 });
+    }
+
+    const approvalToken = crypto.randomBytes(32).toString('hex');
+    
+    const newUser = new User({
+      email,
+      status: 'pending_approval',
+      approvalToken
     });
     await newUser.save();
-    return NextResponse.json({ message: 'Admin configurado exitosamente' }, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ message: 'Error al crear el administrador', error }, { status: 500 });
-  }
-}
 
-export async function GET() {
-  await dbConnect();
-  const userCount = await User.countDocuments();
-  return NextResponse.json({ needsSetup: userCount === 0 });
+    // Notificar al Master Admin
+    const masterEmail = 'omarfornaroli@gmail.com';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
+    
+    await sendEmail({
+      to: masterEmail,
+      subject: 'Nueva solicitud de registro administrativo - Sortealo',
+      html: `
+        <h1>Solicitud de Acceso</h1>
+        <p>El usuario <strong>${email}</strong> desea registrarse como administrador.</p>
+        <p>Haz clic en el botón de abajo para habilitar su registro:</p>
+        <a href="${baseUrl}/api/auth/approve?token=${approvalToken}" 
+           style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+           Aprobar Registro
+        </a>
+      `
+    });
+
+    return NextResponse.json({ message: 'Solicitud enviada. Pendiente de aprobación del administrador maestro.' }, { status: 201 });
+  } catch (error) {
+    return NextResponse.json({ message: 'Error al procesar el registro', error }, { status: 500 });
+  }
 }

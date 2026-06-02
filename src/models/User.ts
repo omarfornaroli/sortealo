@@ -5,15 +5,24 @@ import bcrypt from 'bcryptjs';
 export interface IUser extends Document {
   email: string;
   password?: string;
+  status: 'pending_approval' | 'pending_setup' | 'active';
+  approvalToken?: string;
+  setupToken?: string;
   isVerified: boolean;
 }
 
 const UserSchema: Schema = new Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String },
-  isVerified: {type: Boolean, default: false}
+  status: { 
+    type: String, 
+    enum: ['pending_approval', 'pending_setup', 'active'],
+    default: 'pending_approval'
+  },
+  approvalToken: { type: String },
+  setupToken: { type: String },
+  isVerified: { type: Boolean, default: false }
 });
-
 
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password') || !this.password) {
