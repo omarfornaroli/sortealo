@@ -24,13 +24,13 @@ const UserSchema: Schema = new Schema({
   isVerified: { type: Boolean, default: false }
 });
 
-UserSchema.pre('save', async function (next) {
+// Corregido: En funciones async de Mongoose hooks no se debe usar el callback 'next'
+UserSchema.pre('save', async function () {
   if (!this.isModified('password') || !this.password) {
-    return next();
+    return;
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  next();
 });
 
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

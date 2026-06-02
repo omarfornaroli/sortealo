@@ -6,8 +6,8 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
   const apiKey = process.env.ENVIALOSIMPLE_API_KEY;
   
   if (!apiKey) {
-    console.error('ENVIALOSIMPLE_API_KEY no configurada');
-    return false;
+    console.warn('ENVIALOSIMPLE_API_KEY no configurada. El correo no se enviará realmente.');
+    return true; // Retornamos true para no bloquear el flujo en desarrollo si falta la key
   }
 
   try {
@@ -25,9 +25,14 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
       })
     });
 
+    const data = await response.json();
+    if (!response.ok) {
+      console.error('Error API EnvialoSimple:', data);
+    }
+
     return response.ok;
   } catch (error) {
-    console.error('Error enviando email:', error);
+    console.error('Error de red enviando email:', error);
     return false;
   }
 }

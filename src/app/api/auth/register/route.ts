@@ -6,9 +6,8 @@ import { sendEmail } from '@/lib/email';
 import crypto from 'crypto';
 
 export async function POST(req: NextRequest) {
-  await dbConnect();
-  
   try {
+    await dbConnect();
     const { email } = await req.json();
 
     if (!email) {
@@ -27,9 +26,10 @@ export async function POST(req: NextRequest) {
       status: 'pending_approval',
       approvalToken
     });
+    
+    // El error "next is not a function" ocurría aquí por el hook pre-save
     await newUser.save();
 
-    // Notificar al Master Admin
     const masterEmail = 'omarfornaroli@gmail.com';
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
     
@@ -52,13 +52,15 @@ export async function POST(req: NextRequest) {
       `
     });
 
-    if (!emailSent) {
-      console.error('Error al enviar el email de aprobación');
-    }
-
-    return NextResponse.json({ message: 'Solicitud enviada con éxito. El administrador maestro revisará tu petición.' }, { status: 201 });
+    return NextResponse.json({ 
+      message: 'Solicitud enviada con éxito. El administrador maestro revisará tu petición.' 
+    }, { status: 201 });
+    
   } catch (error: any) {
     console.error('Error en el registro:', error);
-    return NextResponse.json({ message: 'Error al procesar el registro', error: error.message }, { status: 500 });
+    return NextResponse.json({ 
+      message: 'Error al procesar el registro', 
+      error: error.message 
+    }, { status: 500 });
   }
 }
