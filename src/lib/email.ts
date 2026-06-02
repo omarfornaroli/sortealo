@@ -10,29 +10,39 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
     return false;
   }
 
+  const payload = {
+    from: 'no-reply@sortealo.com.ar',
+    to: to,
+    subject: subject,
+    html: html
+  };
+
+  // Log del contenido que se va a enviar
+  console.log('--- INTENTO DE ENVÍO DE EMAIL ---');
+  console.log('Destinatario:', to);
+  console.log('Asunto:', subject);
+  console.log('Cuerpo HTML (primeros 500 caracteres):', html.substring(0, 500) + '...');
+  console.log('---------------------------------');
+
   try {
-    // Usamos el endpoint para envíos de EnvialoSimple
-    const response = await fetch('https://api.envialosimple.email/v1/context/email/send', {
+    const response = await fetch('https://api.envialosimple.email/api/v1/mail/send', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
-      body: JSON.stringify({
-        from: 'Sortealo <no-reply@sortealo.com.ar>',
-        to: to,
-        subject: subject,
-        html: html
-      })
+      body: JSON.stringify(payload)
     });
 
-    const contentType = response.headers.get("content-type");
-    let responseData;
+    // Capturamos la respuesta en bruto para depuración
+    const rawResponse = await response.text();
+    console.log(`EnvialoSimple API Response Raw (Status: ${response.status}):`, rawResponse);
 
-    if (contentType && contentType.indexOf("application/json") !== -1) {
-      responseData = await response.json();
-    } else {
-      responseData = await response.text();
+    let responseData;
+    try {
+      responseData = JSON.parse(rawResponse);
+    } catch (e) {
+      responseData = rawResponse;
     }
     
     if (!response.ok) {
