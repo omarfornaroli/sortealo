@@ -9,16 +9,24 @@ export async function middleware(req: NextRequest) {
   if (pathname.startsWith('/admin')) {
     const sessionCookie = req.cookies.get('session')?.value;
     
+    console.log(`--- MIDDLEWARE CHECK: ${pathname} ---`);
     if (!sessionCookie) {
+      console.warn('Middleware: No se encontró cookie de sesión. Redirigiendo a login...');
       return NextResponse.redirect(new URL('/auth/login', req.url));
     }
 
-    const session = await decrypt(sessionCookie);
-    if (!session) {
-      // Si la cookie es inválida o expiró, redirigimos y limpiamos
-      const response = NextResponse.redirect(new URL('/auth/login', req.url));
-      response.cookies.delete('session');
-      return response;
+    try {
+      const session = await decrypt(sessionCookie);
+      if (!session) {
+        console.warn('Middleware: Sesión inválida o expirada. Limpiando y redirigiendo...');
+        const response = NextResponse.redirect(new URL('/auth/login', req.url));
+        response.cookies.delete('session');
+        return response;
+      }
+      console.log('Middleware: Sesión válida detectada para:', session.email);
+    } catch (err) {
+      console.error('Middleware: Error al desencriptar sesión:', err);
+      return NextResponse.redirect(new URL('/auth/login', req.url));
     }
   }
 
@@ -27,8 +35,8 @@ export async function middleware(req: NextRequest) {
     const sessionCookie = req.cookies.get('session')?.value;
     if (sessionCookie) {
       const session = await decrypt(sessionCookie);
-      // Evitamos el bucle de redirección en setup-password
       if (session && pathname !== '/auth/setup-password') {
+        console.log('Middleware: Usuario ya autenticado intentando entrar a ruta de auth. Redirigiendo a /admin');
         return NextResponse.redirect(new URL('/admin', req.url));
       }
     }

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -15,11 +15,19 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    // Log inicial para verificar estado de localStorage
+    const savedSession = localStorage.getItem('userSession');
+    console.log('Estado inicial de localStorage userSession:', savedSession ? 'Presente' : 'Ausente');
+  }, []);
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
     
+    console.log('Iniciando proceso de autenticación para:', email);
     setLoading(true);
+    
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -28,12 +36,25 @@ export default function LoginPage() {
       });
 
       const data = await res.json();
+      console.log('Respuesta del servidor recibida:', data);
 
       if (res.ok) {
+        console.log('Login exitoso. Guardando en localStorage...');
+        
+        // Guardar en localStorage como respaldo y para logs
+        localStorage.setItem('userSession', JSON.stringify({
+          email: data.user.email,
+          loginTime: new Date().toISOString(),
+          isAuthenticated: true
+        }));
+
         toast({ title: 'Bienvenido', description: 'Accediendo al panel administrativo...' });
-        // Usamos location.href para asegurar que el navegador cargue la sesión y el middleware la detecte
-        window.location.href = '/admin';
+        
+        console.log('Redirigiendo a /admin...');
+        // Usamos location.replace para forzar una carga limpia y asegurar que el middleware vea la cookie
+        window.location.replace('/admin');
       } else {
+        console.warn('Login fallido. Motivo:', data.message);
         toast({ 
           title: 'Error de acceso', 
           description: data.message || 'Credenciales inválidas', 
@@ -41,6 +62,7 @@ export default function LoginPage() {
         });
       }
     } catch (error) {
+      console.error('Error de red durante el login:', error);
       toast({ 
         title: 'Error', 
         description: 'Error al conectar con el servidor', 
