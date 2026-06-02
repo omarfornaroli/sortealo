@@ -1,318 +1,64 @@
-
-"use client";
-
-import { useState, useMemo, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
-} from '@/components/ui/dialog';
-import { Plus, Settings, Trash2, Edit2, LayoutDashboard, Ticket, LogOut } from 'lucide-react';
-import { useCollection, useFirestore, useUser, useAuth } from '@/firebase';
-import { collection, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
-import { signOut } from 'firebase/auth';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import Link from 'next/link';
+import dbConnect from '@/lib/db';
+import Raffle from '@/models/Raffle';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Trash2, Edit, Plus } from 'lucide-react';
 
-export default function AdminPage() {
-  const { user, loading: userLoading } = useUser();
-  const auth = useAuth();
-  const db = useFirestore();
-  const router = useRouter();
-  
-  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+async function getRaffles() {
+  await dbConnect();
+  return Raffle.find({}).lean();
+}
 
-  useEffect(() => {
-    if (!userLoading && (!user || user.email !== adminEmail)) {
-      router.push('/admin/login');
-    }
-  }, [user, userLoading, router, adminEmail]);
-
-  const rafflesQuery = useMemo(() => {
-    if (!db) return null;
-    return collection(db, 'raffles');
-  }, [db]);
-
-  const { data: raffles, loading: rafflesLoading } = useCollection(rafflesQuery);
-  
-  const [newRaffle, setNewRaffle] = useState({
-    title: '',
-    prize: '',
-    ticketPrice: '',
-    maxTickets: '',
-    drawDate: '',
-    description: '',
-    imageUrl: 'https://picsum.photos/seed/raffle/800/600'
-  });
-
-  const handleAddRaffle = () => {
-    if (!db) return;
-    
-    const data = {
-      ...newRaffle,
-      ticketPrice: Number(newRaffle.ticketPrice),
-      maxTickets: Number(newRaffle.maxTickets),
-      soldTickets: 0,
-      status: 'active',
-      createdAt: serverTimestamp(),
-    };
-
-    addDoc(collection(db, 'raffles'), data)
-      .then(() => {
-        setNewRaffle({
-          title: '',
-          prize: '',
-          ticketPrice: '',
-          maxTickets: '',
-          drawDate: '',
-          description: '',
-          imageUrl: 'https://picsum.photos/seed/raffle/800/600'
-        });
-      })
-      .catch(async (err) => {
-        const permissionError = new FirestorePermissionError({
-          path: 'raffles',
-          operation: 'create',
-          requestResourceData: data,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      });
-  };
-
-  const handleDelete = (id: string) => {
-    if (!db) return;
-    if (confirm('¿Estás seguro de eliminar este sorteo?')) {
-      deleteDoc(doc(db, 'raffles', id))
-        .catch(async () => {
-          const permissionError = new FirestorePermissionError({
-            path: `raffles/${id}`,
-            operation: 'delete',
-          });
-          errorEmitter.emit('permission-error', permissionError);
-        });
-    }
-  };
-
-  const handleLogout = async () => {
-    if (auth) {
-      await signOut(auth);
-      router.push('/admin/login');
-    }
-  };
-
-  if (userLoading || !user || user.email !== adminEmail) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+export default async function AdminPage() {
+  const raffles = await getRaffles();
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <Navbar />
-      
-      <main className="flex-1 pt-32 pb-20">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
-            <div className="space-y-2">
-              <h1 className="text-4xl font-headline font-bold flex items-center gap-3">
-                <LayoutDashboard className="text-primary w-8 h-8" />
-                Panel de Administración
-              </h1>
-              <p className="text-muted-foreground">Sesión iniciada como: <span className="font-bold text-slate-900">{user.email}</span></p>
-            </div>
-
-            <div className="flex gap-4">
-              <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2">
-                <LogOut className="w-4 h-4" />
-                Cerrar Sesión
-              </Button>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button className="bg-primary text-white h-12 px-6 rounded-xl font-bold flex items-center gap-2">
-                    <Plus className="w-5 h-5" />
-                    Nuevo Sorteo
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px] bg-white">
-                  <DialogHeader>
-                    <DialogTitle>Crear Sorteo</DialogTitle>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="title">Título del Sorteo</Label>
-                      <Input 
-                        id="title" 
-                        placeholder="Ej: Porsche 911 Carrera" 
-                        value={newRaffle.title}
-                        onChange={(e) => setNewRaffle({...newRaffle, title: e.target.value})}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="price">Precio por Ticket</Label>
-                        <Input 
-                          id="price" 
-                          type="number" 
-                          placeholder="2500" 
-                          value={newRaffle.ticketPrice}
-                          onChange={(e) => setNewRaffle({...newRaffle, ticketPrice: e.target.value})}
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="tickets">Tickets Totales</Label>
-                        <Input 
-                          id="tickets" 
-                          type="number" 
-                          placeholder="1000" 
-                          value={newRaffle.maxTickets}
-                          onChange={(e) => setNewRaffle({...newRaffle, maxTickets: e.target.value})}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="date">Fecha del Sorteo</Label>
-                      <Input 
-                        id="date" 
-                        type="datetime-local" 
-                        value={newRaffle.drawDate}
-                        onChange={(e) => setNewRaffle({...newRaffle, drawDate: e.target.value})}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="desc">Descripción</Label>
-                      <Textarea 
-                        id="desc" 
-                        placeholder="Detalles del premio..." 
-                        value={newRaffle.description}
-                        onChange={(e) => setNewRaffle({...newRaffle, description: e.target.value})}
-                      />
-                    </div>
-                    <Button onClick={handleAddRaffle} className="w-full mt-4 bg-primary text-white">Guardar Sorteo</Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <Card className="border-none shadow-sm bg-white">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Sorteos Activos</CardTitle>
-                <Ticket className="w-4 h-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{raffles?.length || 0}</div>
-              </CardContent>
-            </Card>
-            <Card className="border-none shadow-sm bg-white">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Recaudación Estimada</CardTitle>
-                <Settings className="w-4 h-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-emerald-600">
-                  ${raffles?.reduce((acc: any, r: any) => acc + (r.ticketPrice * (r.soldTickets || 0)), 0).toLocaleString()}
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border-none shadow-sm bg-white">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Tickets Vendidos</CardTitle>
-                <Plus className="w-4 h-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">
-                  {raffles?.reduce((acc: any, r: any) => acc + (r.soldTickets || 0), 0).toLocaleString()}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card className="border-none shadow-sm overflow-hidden bg-white">
-            <CardHeader className="bg-white border-b border-slate-100 p-6">
-              <CardTitle>Listado de Sorteos</CardTitle>
-            </CardHeader>
-            <Table>
-              <TableHeader className="bg-slate-50">
-                <TableRow>
-                  <TableHead>Sorteo</TableHead>
-                  <TableHead>Precio</TableHead>
-                  <TableHead>Progreso</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody className="bg-white">
-                {rafflesLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">Cargando sorteos...</TableCell>
-                  </TableRow>
-                ) : raffles?.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">No hay sorteos creados aún.</TableCell>
-                  </TableRow>
-                ) : (
-                  raffles?.map((raffle: any) => (
-                    <TableRow key={raffle.id} className="hover:bg-slate-50 transition-colors">
-                      <TableCell className="font-medium">
-                        <div className="flex flex-col">
-                          <span>{raffle.title}</span>
-                          <span className="text-[10px] text-muted-foreground uppercase">{raffle.id}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>${raffle.ticketPrice}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold">{Math.round(((raffle.soldTickets || 0) / raffle.maxTickets) * 100)}%</span>
-                          <span className="text-[10px] text-muted-foreground">({raffle.soldTickets || 0} / {raffle.maxTickets})</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-xs">{new Date(raffle.drawDate).toLocaleDateString()}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-primary">
-                            <Edit2 className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => handleDelete(raffle.id)}
-                            className="h-8 w-8 hover:text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </Card>
+    <div className="container mx-auto py-10 px-4">
+      <div className="flex justify-between items-center mb-10">
+        <div>
+          <h1 className="text-4xl font-headline font-bold">Panel de Administración</h1>
+          <p className="text-muted-foreground">Gestiona tus sorteos activos y finalizados.</p>
         </div>
-      </main>
+        <Button asChild className="gap-2">
+          <Link href="/admin/raffles/new">
+            <Plus className="w-4 h-4" /> Nuevo Sorteo
+          </Link>
+        </Button>
+      </div>
 
-      <Footer />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {raffles.length === 0 ? (
+          <div className="col-span-full py-20 text-center border-2 border-dashed rounded-xl border-gray-200">
+            <p className="text-muted-foreground">No hay sorteos creados todavía.</p>
+          </div>
+        ) : (
+          raffles.map((raffle: any) => (
+            <Card key={raffle._id.toString()} className="overflow-hidden hover:shadow-lg transition-shadow border-gray-200">
+              <img src={raffle.imageUrl} alt={raffle.name} className="w-full h-40 object-cover" />
+              <CardHeader className="p-4">
+                <CardTitle className="text-lg">{raffle.name}</CardTitle>
+                <div className="flex justify-between items-center mt-2">
+                  <span className={`text-xs px-2 py-1 rounded-full font-bold ${raffle.isFinished ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-700'}`}>
+                    {raffle.isFinished ? 'FINALIZADO' : 'ACTIVO'}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {raffle.participants?.length || 0} Participantes
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 pt-0 flex gap-2">
+                <Button variant="outline" size="sm" className="flex-1 gap-1">
+                  <Edit className="w-3 h-3" /> Editar
+                </Button>
+                <Button variant="destructive" size="sm" className="gap-1">
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
     </div>
   );
 }
