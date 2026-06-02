@@ -15,15 +15,16 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  // Verificar si ya está logueado al cargar
   useEffect(() => {
+    // Verificar si ya hay sesión al cargar la página
     fetch('/api/auth/session')
       .then(res => res.json())
       .then(data => {
         if (data.isAuthenticated) {
-          window.location.replace('/admin');
+          window.location.href = '/admin';
         }
-      });
+      })
+      .catch(() => {});
   }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -42,8 +43,8 @@ export default function LoginPage() {
 
       if (res.ok) {
         toast({ title: 'Bienvenido', description: 'Sesión iniciada correctamente.' });
-        // Usar replace para evitar que el usuario vuelva atrás al login
-        window.location.replace('/admin');
+        // Usar href en lugar de replace para asegurar que se procesen las cookies
+        window.location.href = '/admin';
       } else {
         toast({ 
           title: 'Error de acceso', 
@@ -64,20 +65,20 @@ export default function LoginPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-slate-50 p-4">
-      <Card className="w-full max-w-md shadow-xl border-slate-200 bg-white">
-        <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-primary/10 rounded-full">
-              <ShieldAlert className="w-8 h-8 text-primary" />
+      <Card className="w-full max-w-md shadow-2xl border-slate-200 bg-white rounded-3xl overflow-hidden">
+        <CardHeader className="space-y-1 pb-8 pt-10">
+          <div className="flex justify-center mb-6">
+            <div className="p-4 bg-primary/10 rounded-2xl">
+              <ShieldAlert className="w-10 h-10 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-center">Panel Administrativo</CardTitle>
-          <p className="text-sm text-center text-muted-foreground">Ingresa tus credenciales para continuar</p>
+          <CardTitle className="text-3xl font-bold text-center text-slate-900 font-headline">Panel Administrativo</CardTitle>
+          <p className="text-sm text-center text-slate-500 font-medium">Ingresa tus credenciales para continuar</p>
         </CardHeader>
         <form onSubmit={handleAuth}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5 px-8">
             <div className="space-y-2">
-              <label className="text-sm font-semibold" htmlFor="email">Email</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500" htmlFor="email">Email</label>
               <Input
                 id="email"
                 type="email"
@@ -85,12 +86,12 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="h-11"
+                className="h-12 bg-slate-50 border-slate-200 rounded-xl focus:bg-white transition-all"
               />
             </div>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <label className="text-sm font-semibold" htmlFor="password">Contraseña</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500" htmlFor="password">Contraseña</label>
               </div>
               <Input
                 id="password"
@@ -99,17 +100,17 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="h-11"
+                className="h-12 bg-slate-50 border-slate-200 rounded-xl focus:bg-white transition-all"
               />
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full h-12 font-bold gap-2 text-base" disabled={loading}>
+          <CardFooter className="flex flex-col gap-5 p-8 pt-6">
+            <Button type="submit" className="w-full h-14 font-bold gap-2 text-base rounded-xl shadow-lg shadow-primary/20" disabled={loading}>
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogIn className="w-5 h-5" />}
               {loading ? 'Validando...' : 'Entrar al Panel'}
             </Button>
-            <div className="text-sm text-center text-slate-500">
-              ¿No tienes acceso? <Link href="/admin/register" className="text-primary font-semibold hover:underline">Solicitar registro</Link>
+            <div className="text-sm text-center text-slate-500 font-medium">
+              ¿No tienes acceso? <Link href="/admin/register" className="text-primary font-bold hover:underline">Solicitar registro</Link>
             </div>
           </CardFooter>
         </form>

@@ -3,21 +3,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 
 export async function middleware(req: NextRequest) {
-  const session = await getSession();
   const { pathname } = req.nextUrl;
 
-  // Rutas públicas de administración que no requieren sesión
-  const publicAdminPaths = [
-    '/admin/login',
-    '/admin/register',
-    '/admin/setup-password'
-  ];
+  // Rutas de administración
+  if (pathname.startsWith('/admin')) {
+    const session = await getSession();
 
-  const isPublicPath = publicAdminPaths.some(path => pathname.startsWith(path));
+    // Rutas públicas dentro de /admin que NO requieren sesión
+    const isPublicAdminPath = 
+      pathname === '/admin/login' || 
+      pathname === '/admin/register' || 
+      pathname === '/admin/setup-password';
 
-  // Si es una ruta de admin y no es pública, verificar sesión
-  if (pathname.startsWith('/admin') && !isPublicPath) {
-    if (!session) {
+    // Si el usuario ya tiene sesión y trata de ir al login, mandarlo al panel
+    if (session && pathname === '/admin/login') {
+      return NextResponse.redirect(new URL('/admin', req.url));
+    }
+
+    // Si NO tiene sesión y la ruta NO es pública, mandarlo al login
+    if (!session && !isPublicAdminPath) {
       return NextResponse.redirect(new URL('/admin/login', req.url));
     }
   }
