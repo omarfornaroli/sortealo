@@ -39,20 +39,22 @@ export async function POST(req: NextRequest) {
 
     const sessionToken = await encrypt(userData);
     
-    // Usamos cookies().set() de next/headers para mayor fiabilidad en persistencia inmediata
+    // 1. Establecer cookie para el Middleware
     const cookieStore = await cookies();
     cookieStore.set('session', sessionToken, {
       httpOnly: true,
-      secure: false, // Permitir en desarrollo
+      secure: false, // Permitir en desarrollo (HTTP)
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: 60 * 60 * 24 * 7, // 1 semana
     });
 
-    console.log('--- API LOGIN: COOKIE ESTABLECIDA ---');
+    console.log('--- API LOGIN: SESIÓN GENERADA ---');
 
+    // 2. Devolver token para localStorage y datos del usuario
     return NextResponse.json({ 
       success: true, 
+      token: sessionToken,
       user: userData,
       message: 'Autenticación exitosa' 
     }, { status: 200 });

@@ -16,16 +16,19 @@ export default function LoginPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Log inicial para verificar estado de localStorage
-    const savedSession = localStorage.getItem('userSession');
-    console.log('Estado inicial de localStorage userSession:', savedSession ? 'Presente' : 'Ausente');
+    // Si ya hay un token válido en localStorage, intentamos ir al panel
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+      console.log('Token detectado en localStorage, redirigiendo...');
+      window.location.replace('/admin');
+    }
   }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
     
-    console.log('Iniciando proceso de autenticación para:', email);
+    console.log('--- INICIANDO LOGIN ---');
     setLoading(true);
     
     try {
@@ -36,12 +39,12 @@ export default function LoginPage() {
       });
 
       const data = await res.json();
-      console.log('Respuesta del servidor recibida:', data);
 
       if (res.ok) {
-        console.log('Login exitoso. Guardando en localStorage...');
+        console.log('Login exitoso. Guardando token en localStorage...');
         
-        // Guardar en localStorage como respaldo y para logs
+        // Guardar token y sesión en localStorage
+        localStorage.setItem('adminToken', data.token);
         localStorage.setItem('userSession', JSON.stringify({
           email: data.user.email,
           loginTime: new Date().toISOString(),
@@ -50,11 +53,11 @@ export default function LoginPage() {
 
         toast({ title: 'Bienvenido', description: 'Accediendo al panel administrativo...' });
         
-        console.log('Redirigiendo a /admin...');
-        // Usamos location.replace para forzar una carga limpia y asegurar que el middleware vea la cookie
-        window.location.replace('/admin');
+        // Redirigir usando replace para limpiar el historial de navegación
+        setTimeout(() => {
+          window.location.replace('/admin');
+        }, 500);
       } else {
-        console.warn('Login fallido. Motivo:', data.message);
         toast({ 
           title: 'Error de acceso', 
           description: data.message || 'Credenciales inválidas', 
@@ -62,7 +65,7 @@ export default function LoginPage() {
         });
       }
     } catch (error) {
-      console.error('Error de red durante el login:', error);
+      console.error('Error de red:', error);
       toast({ 
         title: 'Error', 
         description: 'Error al conectar con el servidor', 
@@ -76,14 +79,14 @@ export default function LoginPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-slate-50 p-4">
       <Card className="w-full max-w-md shadow-2xl border-slate-200 bg-white rounded-3xl overflow-hidden">
-        <CardHeader className="space-y-1 pb-8 pt-10">
+        <CardHeader className="space-y-1 pb-8 pt-10 text-center">
           <div className="flex justify-center mb-6">
             <div className="p-4 bg-primary/10 rounded-2xl">
               <ShieldAlert className="w-10 h-10 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold text-center text-slate-900 font-headline">Panel Administrativo</CardTitle>
-          <p className="text-sm text-center text-slate-500 font-medium">Ingresa para gestionar los sorteos</p>
+          <CardTitle className="text-3xl font-bold text-slate-900 font-headline">Panel Administrativo</CardTitle>
+          <p className="text-sm text-slate-500 font-medium">Ingresa para gestionar los sorteos</p>
         </CardHeader>
         <form onSubmit={handleAuth}>
           <CardContent className="space-y-5 px-8">
