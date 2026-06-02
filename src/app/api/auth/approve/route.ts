@@ -6,19 +6,19 @@ import { sendEmail } from '@/lib/email';
 import crypto from 'crypto';
 
 export async function GET(req: NextRequest) {
-  await dbConnect();
-  const { searchParams } = new URL(req.url);
-  const token = searchParams.get('token');
-
-  if (!token) {
-    return new NextResponse('<h1>Error</h1><p>Token no proporcionado.</p>', { headers: { 'Content-Type': 'text/html' } });
-  }
-
   try {
+    await dbConnect();
+    const { searchParams } = new URL(req.url);
+    const token = searchParams.get('token');
+
+    if (!token) {
+      return new NextResponse('<h1>Error</h1><p>Token no proporcionado.</p>', { headers: { 'Content-Type': 'text/html' } });
+    }
+
     const user = await User.findOne({ approvalToken: token, status: 'pending_approval' });
     
     if (!user) {
-      return new NextResponse('<h1>Error</h1><p>Solicitud no encontrada o ya procesada.</p>', { headers: { 'Content-Type': 'text/html' } });
+      return new NextResponse('<h1>Error</h1><p>Solicitud no encontrada, inválida o ya procesada.</p>', { headers: { 'Content-Type': 'text/html' } });
     }
 
     const setupToken = crypto.randomBytes(32).toString('hex');
@@ -50,15 +50,20 @@ export async function GET(req: NextRequest) {
     });
 
     return new NextResponse(`
-      <div style="font-family: sans-serif; text-align: center; padding: 50px;">
-        <h1 style="color: #059669;">Registro Aprobado con Éxito</h1>
-        <p style="color: #475569;">Se ha enviado un email a <strong>${user.email}</strong> para que configure su contraseña.</p>
-        <p>Puedes cerrar esta ventana.</p>
+      <div style="font-family: sans-serif; text-align: center; padding: 50px; background-color: #f8fafc; min-height: 100vh;">
+        <div style="background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); display: inline-block; max-width: 500px;">
+          <h1 style="color: #059669; margin-bottom: 20px;">Registro Aprobado con Éxito</h1>
+          <p style="color: #475569; font-size: 18px; line-height: 1.6;">
+            Se ha enviado un email a <strong>${user.email}</strong> con las instrucciones para configurar su contraseña.
+          </p>
+          <p style="color: #94a3b8; margin-top: 30px;">Puedes cerrar esta pestaña de forma segura.</p>
+        </div>
       </div>
     `, {
       headers: { 'Content-Type': 'text/html' }
     });
-  } catch (error) {
-    return new NextResponse('<h1>Error del Servidor</h1>', { status: 500, headers: { 'Content-Type': 'text/html' } });
+  } catch (error: any) {
+    console.error('Error en aprobación:', error);
+    return new NextResponse(`<h1>Error del Servidor</h1><p>${error.message}</p>`, { status: 500, headers: { 'Content-Type': 'text/html' } });
   }
 }

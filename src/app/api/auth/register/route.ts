@@ -14,9 +14,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'El email es requerido' }, { status: 400 });
     }
 
+    // Verificar si el usuario ya existe
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return NextResponse.json({ message: 'Este email ya está registrado o en proceso.' }, { status: 400 });
+      return NextResponse.json({ message: 'Este email ya tiene una solicitud o cuenta activa.' }, { status: 400 });
     }
 
     const approvalToken = crypto.randomBytes(32).toString('hex');
@@ -27,7 +28,6 @@ export async function POST(req: NextRequest) {
       approvalToken
     });
     
-    // El error "next is not a function" ocurría aquí por el hook pre-save
     await newUser.save();
 
     const masterEmail = 'omarfornaroli@gmail.com';
@@ -52,14 +52,21 @@ export async function POST(req: NextRequest) {
       `
     });
 
+    if (!emailSent) {
+      // Si el email falla, avisamos al cliente pero el registro en DB se mantiene
+      return NextResponse.json({ 
+        message: 'Solicitud guardada, pero hubo un problema enviando el correo de aviso al administrador maestro.' 
+      }, { status: 201 });
+    }
+
     return NextResponse.json({ 
       message: 'Solicitud enviada con éxito. El administrador maestro revisará tu petición.' 
     }, { status: 201 });
     
   } catch (error: any) {
-    console.error('Error en el registro:', error);
+    console.error('Error en el proceso de registro:', error);
     return NextResponse.json({ 
-      message: 'Error al procesar el registro', 
+      message: 'Error interno al procesar el registro', 
       error: error.message 
     }, { status: 500 });
   }
