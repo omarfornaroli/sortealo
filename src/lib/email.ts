@@ -17,11 +17,11 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
     html: html
   };
 
-  // Log del contenido que se va a enviar
+  // Log del contenido completo para depuración
   console.log('--- INTENTO DE ENVÍO DE EMAIL ---');
   console.log('Destinatario:', to);
   console.log('Asunto:', subject);
-  console.log('Cuerpo HTML (primeros 500 caracteres):', html.substring(0, 500) + '...');
+  console.log('Cuerpo HTML completo:', html);
   console.log('---------------------------------');
 
   try {
@@ -34,7 +34,6 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
       body: JSON.stringify(payload)
     });
 
-    // Capturamos la respuesta en bruto para depuración
     const rawResponse = await response.text();
     console.log(`EnvialoSimple API Response Raw (Status: ${response.status}):`, rawResponse);
 
