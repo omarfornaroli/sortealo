@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Users, Ticket as TicketIcon, Loader2, ExternalLink } from 'lucide-react';
+import { Edit, Trash2, Users, Ticket as TicketIcon, Loader2, ExternalLink, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -25,19 +25,19 @@ export function AdminRaffleList({ initialRaffles }: { initialRaffles: Raffle[] }
   const router = useRouter();
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este sorteo? Esta acción no se puede deshacer.')) return;
+    if (!confirm('¿Seguro que quieres eliminar este sorteo? Se perderán todos los datos de participantes.')) return;
     
     setDeletingId(id);
     try {
       const res = await fetch(`/api/raffles/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setRaffles(prev => prev.filter(r => r._id !== id));
-        toast({ title: 'Sorteo eliminado', description: 'El sorteo se ha borrado correctamente.' });
+        toast({ title: 'Sorteo eliminado', description: 'Los datos se han borrado del sistema.' });
       } else {
         throw new Error('No se pudo eliminar');
       }
     } catch (error) {
-      toast({ title: 'Error', description: 'Ocurrió un error al intentar eliminar el sorteo.', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Error al intentar conectar con el servidor.', variant: 'destructive' });
     } finally {
       setDeletingId(null);
     }
@@ -64,36 +64,44 @@ export function AdminRaffleList({ initialRaffles }: { initialRaffles: Raffle[] }
                 {raffle.isFinished ? 'FINALIZADO' : 'ACTIVO'}
               </span>
             </div>
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-               <Button asChild variant="secondary" size="sm" className="rounded-xl font-bold">
-                 <Link href={`/raffles/${raffle._id}`} target="_blank">
-                   <ExternalLink className="w-4 h-4 mr-2" /> Ver página
-                 </Link>
-               </Button>
-            </div>
           </div>
           <CardHeader className="p-6">
-            <CardTitle className="text-xl font-bold line-clamp-1 text-slate-900">{raffle.name}</CardTitle>
-            <div className="flex items-center gap-4 mt-3 text-xs text-slate-500 font-medium">
-              <span className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
-                <Users className="w-3.5 h-3.5 text-primary" /> {raffle.participants?.length || 0} participantes
-              </span>
-            </div>
+            <CardTitle className="text-xl font-bold line-clamp-1 text-slate-900 mb-1">{raffle.name}</CardTitle>
+            <p className="text-sm text-slate-500 line-clamp-2 min-h-[40px] leading-relaxed">
+              {raffle.description}
+            </p>
           </CardHeader>
-          <CardContent className="p-6 pt-0 flex gap-3">
-            <Button asChild variant="outline" className="flex-1 gap-2 border-slate-200 rounded-xl hover:bg-slate-50 font-bold transition-colors">
-              <Link href={`/admin/raffles/edit/${raffle._id}`}>
-                <Edit className="w-4 h-4" /> Editar
-              </Link>
-            </Button>
-            <Button 
-              variant="destructive" 
-              className="px-4 rounded-xl shadow-lg shadow-red-500/10 transition-transform active:scale-95"
-              onClick={() => handleDelete(raffle._id)}
-              disabled={deletingId === raffle._id}
-            >
-              {deletingId === raffle._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-            </Button>
+          <CardContent className="p-6 pt-0 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-slate-50 px-3 py-2.5 rounded-xl border border-slate-100">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  <Users className="w-3 h-3" /> Participantes
+                </div>
+                <p className="text-lg font-bold text-slate-900">{raffle.participants?.length || 0}</p>
+              </div>
+              <div className="bg-slate-50 px-3 py-2.5 rounded-xl border border-slate-100">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  <Calendar className="w-3 h-3" /> Estado
+                </div>
+                <p className="text-sm font-bold text-slate-900">{raffle.isFinished ? 'Cerrado' : 'Abierto'}</p>
+              </div>
+            </div>
+            
+            <div className="flex gap-2 pt-2">
+              <Button asChild variant="outline" className="flex-1 gap-2 border-slate-200 rounded-xl hover:bg-slate-50 font-bold transition-colors">
+                <Link href={`/admin/raffles/edit/${raffle._id}`}>
+                  <Edit className="w-4 h-4" /> Editar
+                </Link>
+              </Button>
+              <Button 
+                variant="destructive" 
+                className="px-4 rounded-xl shadow-lg shadow-red-500/10 transition-transform active:scale-95"
+                onClick={() => handleDelete(raffle._id)}
+                disabled={deletingId === raffle._id}
+              >
+                {deletingId === raffle._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ))}
