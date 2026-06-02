@@ -4,39 +4,51 @@ import Link from 'next/link';
 import dbConnect from '@/lib/db';
 import Raffle from '@/models/Raffle';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Trash2, Edit, Plus, LogOut, LayoutDashboard } from 'lucide-react';
-import { deleteSession } from '@/lib/session';
+import { Trash2, Edit, Plus, LogOut, LayoutDashboard, Users, Ticket as TicketIcon } from 'lucide-react';
+import { deleteSession, getSession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
 async function getRaffles() {
   await dbConnect();
-  return Raffle.find({}).lean();
+  const raffles = await Raffle.find({}).sort({ createdAt: -1 }).lean();
+  return JSON.parse(JSON.stringify(raffles));
 }
 
 async function handleLogout() {
   'use server';
-  deleteSession();
+  await deleteSession();
   redirect('/admin/login');
 }
 
 export default async function AdminPage() {
+  // Verificación de sesión secundaria para evitar fugas del middleware
+  const session = await getSession();
+  if (!session) {
+    redirect('/admin/login');
+  }
+
   const raffles = await getRaffles();
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-slate-200 h-16 flex items-center shadow-sm">
+      <nav className="bg-white border-b border-slate-200 h-16 flex items-center shadow-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
+          <Link href="/admin" className="flex items-center gap-2">
             <LayoutDashboard className="w-5 h-5 text-primary" />
             <span className="font-bold text-lg">Sortealo Admin</span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-slate-400 hidden md:inline-block">
+              Sesión: {session.email}
+            </span>
+            <form action={handleLogout}>
+              <Button variant="ghost" size="sm" className="gap-2 text-slate-600 hover:text-red-600">
+                <LogOut className="w-4 h-4" /> Cerrar Sesión
+              </Button>
+            </form>
           </div>
-          <form action={handleLogout}>
-            <Button variant="ghost" size="sm" className="gap-2 text-slate-600 hover:text-red-600">
-              <LogOut className="w-4 h-4" /> Cerrar Sesión
-            </Button>
-          </form>
         </div>
       </nav>
 
@@ -63,7 +75,7 @@ export default async function AdminPage() {
             </div>
           ) : (
             raffles.map((raffle: any) => (
-              <Card key={raffle._id.toString()} className="overflow-hidden hover:shadow-xl transition-all border-slate-200 bg-white group">
+              <Card key={raffle._id} className="overflow-hidden hover:shadow-xl transition-all border-slate-200 bg-white group">
                 <div className="relative h-48 overflow-hidden">
                   <img 
                     src={raffle.imageUrl} 
@@ -78,9 +90,12 @@ export default async function AdminPage() {
                 </div>
                 <CardHeader className="p-5">
                   <CardTitle className="text-xl font-bold line-clamp-1">{raffle.name}</CardTitle>
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-xs text-slate-400">
-                      {raffle.participants?.length || 0} Participantes
+                  <div className="flex items-center gap-4 mt-2 text-xs text-slate-400">
+                    <span className="flex items-center gap-1">
+                      <Users className="w-3 h-3" /> {raffle.participants?.length || 0}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <TicketIcon className="w-3 h-3" /> {raffle.isFinished ? 'Cerrado' : 'Abierto'}
                     </span>
                   </div>
                 </CardHeader>

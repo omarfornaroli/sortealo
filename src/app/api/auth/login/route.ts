@@ -6,12 +6,16 @@ import bcrypt from 'bcryptjs';
 import { createSession } from '@/lib/session';
 
 export async function POST(req: NextRequest) {
-  await dbConnect();
-  
   try {
+    await dbConnect();
     const { email, password } = await req.json();
 
-    const user = await User.findOne({ email });
+    if (!email || !password) {
+      return NextResponse.json({ message: 'Email y contraseña son requeridos' }, { status: 400 });
+    }
+
+    // Búsqueda insensible a mayúsculas para mayor robustez
+    const user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user || !user.password) {
       return NextResponse.json({ message: 'Credenciales inválidas' }, { status: 401 });
@@ -24,15 +28,21 @@ export async function POST(req: NextRequest) {
     }
 
     if (user.status !== 'active') {
-      return NextResponse.json({ message: 'Tu cuenta aún no está activa' }, { status: 403 });
+      const statusMessages = {
+        'pending_approval': 'Tu cuenta está esperando aprobación del administrador maestro.',
+        'pending_setup': 'Debes configurar tu contraseña primero mediante el link enviado a tu email.'
+      };
+      return NextResponse.json({ 
+        message: statusMessages[user.status as keyof typeof statusMessages] || 'Tu cuenta aún no está activa' 
+      }, { status: 403 });
     }
 
-    // Importante: Convertir el ID a string para la carga útil del JWT
+    // Crear sesión guardando solo el ID como string
     await createSession({ id: user._id.toString(), email: user.email });
 
     return NextResponse.json({ message: 'Sesión iniciada correctamente' }, { status: 200 });
   } catch (error: any) {
     console.error('Error en login API:', error);
-    return NextResponse.json({ message: 'Error al iniciar sesión', error: error.message }, { status: 500 });
+    return NextResponse.json({ message: 'Error interno al iniciar sesión' }, { status: 500 });
   }
 }

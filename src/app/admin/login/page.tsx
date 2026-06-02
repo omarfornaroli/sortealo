@@ -2,7 +2,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -18,8 +17,9 @@ export default function LoginPage() {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+    
     setLoading(true);
-
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -31,13 +31,21 @@ export default function LoginPage() {
 
       if (res.ok) {
         toast({ title: 'Bienvenido', description: 'Sesión iniciada correctamente.' });
-        // Usamos window.location.href para asegurar que la cookie se procese y el middleware permita el paso
-        window.location.href = '/admin';
+        // Forzamos una recarga completa hacia /admin para asegurar que las cookies se procesen
+        window.location.replace('/admin');
       } else {
-        toast({ title: 'Error', description: data.message || 'Credenciales inválidas', variant: 'destructive' });
+        toast({ 
+          title: 'Error de acceso', 
+          description: data.message || 'Credenciales inválidas', 
+          variant: 'destructive' 
+        });
       }
     } catch (error) {
-      toast({ title: 'Error', description: 'Ocurrió un error al conectar con el servidor', variant: 'destructive' });
+      toast({ 
+        title: 'Error', 
+        description: 'Ocurrió un error al conectar con el servidor', 
+        variant: 'destructive' 
+      });
     } finally {
       setLoading(false);
     }
@@ -45,7 +53,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-slate-50 p-4">
-      <Card className="w-full max-w-md shadow-xl border-slate-200">
+      <Card className="w-full max-w-md shadow-xl border-slate-200 bg-white">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
             <div className="p-3 bg-primary/10 rounded-full">
@@ -66,10 +74,13 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="h-11"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold" htmlFor="password">Contraseña</label>
+              <div className="flex justify-between items-center">
+                <label className="text-sm font-semibold" htmlFor="password">Contraseña</label>
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -77,15 +88,16 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="h-11"
               />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full h-11 font-bold gap-2" disabled={loading}>
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
-              {loading ? 'Iniciando sesión...' : 'Entrar'}
+            <Button type="submit" className="w-full h-12 font-bold gap-2 text-base" disabled={loading}>
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogIn className="w-5 h-5" />}
+              {loading ? 'Validando...' : 'Entrar al Panel'}
             </Button>
-            <div className="text-sm text-center">
+            <div className="text-sm text-center text-slate-500">
               ¿No tienes acceso? <Link href="/admin/register" className="text-primary font-semibold hover:underline">Solicitar registro</Link>
             </div>
           </CardFooter>
