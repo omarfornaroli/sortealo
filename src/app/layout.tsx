@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'EliteDraw | Exclusive Online Raffles',
+  title: 'Sortealo | Exclusive Online Raffles',
   description: 'Participate in the most exclusive online raffles for premium cars, motorcycles, and technology.',
 };
 

@@ -51,7 +51,7 @@ const generateRaffleDescriptionPrompt = ai.definePrompt({
   name: 'generateRaffleDescriptionPrompt',
   input: { schema: GenerateRaffleDescriptionInputSchema },
   output: { schema: GenerateRaffleDescriptionOutputSchema },
-  prompt: `You are an expert marketing copywriter for a premium online raffle platform called "EliteDraw".
+  prompt: `You are an expert marketing copywriter for a premium online raffle platform called "Sortealo".
 Your goal is to create highly engaging and persuasive marketing descriptions for raffle prizes to maximize ticket sales.
 Use the provided prize details to craft a compelling description that highlights the value, exclusivity, and excitement of winning.
 Keep the tone professional, aspirational, and slightly urgent.

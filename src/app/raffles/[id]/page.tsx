@@ -167,7 +167,7 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
               <div className="bg-accent/10 rounded-2xl p-6 border border-white/5 space-y-4">
                 <h4 className="font-bold flex items-center gap-2">
                   <ShieldCheck className="text-primary w-5 h-5" />
-                  Garantía EliteDraw
+                  Garantía Sortealo
                 </h4>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   Tus números se generan instantáneamente tras la confirmación del pago. 

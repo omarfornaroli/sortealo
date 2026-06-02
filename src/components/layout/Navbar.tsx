@@ -18,7 +18,7 @@ export function Navbar() {
             <Trophy className="text-white w-6 h-6" />
           </div>
           <span className="font-headline text-2xl font-bold tracking-tight text-slate-900">
-            EliteDraw
+            Sortealo
           </span>
         </Link>
 

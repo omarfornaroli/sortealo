@@ -106,7 +106,7 @@ export default function Home() {
           <div className="container mx-auto px-4 max-w-3xl">
             <div className="text-center mb-12 space-y-4">
               <h2 className="text-4xl font-headline font-bold">Preguntas Frecuentes</h2>
-              <p className="text-muted-foreground">Todo lo que necesitas saber sobre EliteDraw.</p>
+              <p className="text-muted-foreground">Todo lo que necesitas saber sobre Sortealo.</p>
             </div>
             
             <Accordion type="single" collapsible className="w-full space-y-4">

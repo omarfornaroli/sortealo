@@ -1,4 +1,4 @@
-# **App Name**: EliteDraw
+# **App Name**: Sortealo
 
 ## Core Features:
 
