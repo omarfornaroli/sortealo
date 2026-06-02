@@ -1,0 +1,32 @@
+
+{
+  "entities": {
+    "Raffle": {
+      "title": "Raffle",
+      "description": "Represents a raffle sweepstake event.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "prize": { "type": "string" },
+        "ticketPrice": { "type": "number" },
+        "maxTickets": { "type": "number" },
+        "soldTickets": { "type": "number" },
+        "drawDate": { "type": "string", "format": "date-time" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "completed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "ticketPrice", "maxTickets", "drawDate"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com"]
+  },
+  "firestore": {
+    "/raffles/{raffleId}": {
+      "schema": "Raffle",
+      "description": "Collection of available raffles."
+    }
+  }
+}

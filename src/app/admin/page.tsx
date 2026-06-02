@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -27,11 +27,18 @@ import {
 import { Plus, Settings, Trash2, Edit2, LayoutDashboard, Ticket } from 'lucide-react';
 import { useCollection, useFirestore } from '@/firebase';
 import { collection, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function AdminPage() {
   const db = useFirestore();
-  const rafflesCollection = db ? collection(db, 'raffles') : null;
-  const { data: raffles, loading } = useCollection(rafflesCollection);
+  
+  const rafflesQuery = useMemo(() => {
+    if (!db) return null;
+    return collection(db, 'raffles');
+  }, [db]);
+
+  const { data: raffles, loading } = useCollection(rafflesQuery);
   
   const [newRaffle, setNewRaffle] = useState({
     title: '',
@@ -43,37 +50,52 @@ export default function AdminPage() {
     imageUrl: 'https://picsum.photos/seed/raffle/800/600'
   });
 
-  const handleAddRaffle = async () => {
+  const handleAddRaffle = () => {
     if (!db) return;
     
-    try {
-      await addDoc(collection(db, 'raffles'), {
-        ...newRaffle,
-        ticketPrice: Number(newRaffle.ticketPrice),
-        maxTickets: Number(newRaffle.maxTickets),
-        soldTickets: 0,
-        status: 'active',
-        createdAt: serverTimestamp(),
-        images: [newRaffle.imageUrl]
+    const data = {
+      ...newRaffle,
+      ticketPrice: Number(newRaffle.ticketPrice),
+      maxTickets: Number(newRaffle.maxTickets),
+      soldTickets: 0,
+      status: 'active',
+      createdAt: serverTimestamp(),
+      images: [newRaffle.imageUrl]
+    };
+
+    addDoc(collection(db, 'raffles'), data)
+      .then(() => {
+        setNewRaffle({
+          title: '',
+          prize: '',
+          ticketPrice: '',
+          maxTickets: '',
+          drawDate: '',
+          description: '',
+          imageUrl: 'https://picsum.photos/seed/raffle/800/600'
+        });
+      })
+      .catch(async (err) => {
+        const permissionError = new FirestorePermissionError({
+          path: 'raffles',
+          operation: 'create',
+          requestResourceData: data,
+        });
+        errorEmitter.emit('permission-error', permissionError);
       });
-      setNewRaffle({
-        title: '',
-        prize: '',
-        ticketPrice: '',
-        maxTickets: '',
-        drawDate: '',
-        description: '',
-        imageUrl: 'https://picsum.photos/seed/raffle/800/600'
-      });
-    } catch (error) {
-      console.error("Error adding raffle:", error);
-    }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (!db) return;
     if (confirm('¿Estás seguro de eliminar este sorteo?')) {
-      await deleteDoc(doc(db, 'raffles', id));
+      deleteDoc(doc(db, 'raffles', id))
+        .catch(async () => {
+          const permissionError = new FirestorePermissionError({
+            path: `raffles/${id}`,
+            operation: 'delete',
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        });
     }
   };
 
@@ -99,7 +121,7 @@ export default function AdminPage() {
                   Nuevo Sorteo
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
+              <DialogContent className="sm:max-w-[500px] bg-white">
                 <DialogHeader>
                   <DialogTitle>Crear Sorteo</DialogTitle>
                 </DialogHeader>
@@ -153,14 +175,14 @@ export default function AdminPage() {
                       onChange={(e) => setNewRaffle({...newRaffle, description: e.target.value})}
                     />
                   </div>
-                  <Button onClick={handleAddRaffle} className="w-full mt-4 bg-primary">Guardar Sorteo</Button>
+                  <Button onClick={handleAddRaffle} className="w-full mt-4 bg-primary text-white">Guardar Sorteo</Button>
                 </div>
               </DialogContent>
             </Dialog>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <Card className="border-none shadow-sm">
+            <Card className="border-none shadow-sm bg-white">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Sorteos Activos</CardTitle>
                 <Ticket className="w-4 h-4 text-primary" />
@@ -169,31 +191,31 @@ export default function AdminPage() {
                 <div className="text-3xl font-bold">{raffles?.length || 0}</div>
               </CardContent>
             </Card>
-            <Card className="border-none shadow-sm">
+            <Card className="border-none shadow-sm bg-white">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Recaudación Estimada</CardTitle>
                 <Settings className="w-4 h-4 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-emerald-600">
-                  ${raffles?.reduce((acc, r) => acc + (r.ticketPrice * (r.soldTickets || 0)), 0).toLocaleString()}
+                  ${raffles?.reduce((acc: any, r: any) => acc + (r.ticketPrice * (r.soldTickets || 0)), 0).toLocaleString()}
                 </div>
               </CardContent>
             </Card>
-            <Card className="border-none shadow-sm">
+            <Card className="border-none shadow-sm bg-white">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Tickets Vendidos</CardTitle>
                 <Plus className="w-4 h-4 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {raffles?.reduce((acc, r) => acc + (r.soldTickets || 0), 0).toLocaleString()}
+                  {raffles?.reduce((acc: any, r: any) => acc + (r.soldTickets || 0), 0).toLocaleString()}
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          <Card className="border-none shadow-sm overflow-hidden">
+          <Card className="border-none shadow-sm overflow-hidden bg-white">
             <CardHeader className="bg-white border-b border-slate-100 p-6">
               <CardTitle>Listado de Sorteos</CardTitle>
             </CardHeader>
@@ -217,7 +239,7 @@ export default function AdminPage() {
                     <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">No hay sorteos creados aún.</TableCell>
                   </TableRow>
                 ) : (
-                  raffles?.map((raffle) => (
+                  raffles?.map((raffle: any) => (
                     <TableRow key={raffle.id} className="hover:bg-slate-50 transition-colors">
                       <TableCell className="font-medium">
                         <div className="flex flex-col">
