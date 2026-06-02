@@ -11,7 +11,7 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
   }
 
   try {
-    // Intentamos usar el endpoint estándar de EnvialoSimple para envíos transaccionales
+    // Usamos el endpoint para envíos de EnvialoSimple
     const response = await fetch('https://api.envialosimple.email/v1/context/email/send', {
       method: 'POST',
       headers: {
@@ -26,13 +26,20 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
       })
     });
 
-    const data = await response.json();
+    const contentType = response.headers.get("content-type");
+    let responseData;
+
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+      responseData = await response.json();
+    } else {
+      responseData = await response.text();
+    }
     
     if (!response.ok) {
       console.error('Error detectado en EnvialoSimple API:', {
         status: response.status,
         statusText: response.statusText,
-        detail: data
+        detail: responseData
       });
       return false;
     }

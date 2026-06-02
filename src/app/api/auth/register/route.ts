@@ -53,9 +53,8 @@ export async function POST(req: NextRequest) {
     });
 
     if (!emailSent) {
-      // Si el email falla, avisamos al cliente pero el registro en DB se mantiene
       return NextResponse.json({ 
-        message: 'Solicitud guardada, pero hubo un problema enviando el correo de aviso al administrador maestro.' 
+        message: 'Solicitud guardada en base de datos, pero el servicio de correo falló. Contacta al soporte técnico.' 
       }, { status: 201 });
     }
 
