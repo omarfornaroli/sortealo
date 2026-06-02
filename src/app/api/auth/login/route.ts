@@ -29,28 +29,35 @@ export async function POST(req: NextRequest) {
 
     if (user.status !== 'active') {
       const statusMessages = {
-        'pending_approval': 'Tu cuenta está esperando aprobación del administrador maestro.',
-        'pending_setup': 'Debes configurar tu contraseña primero mediante el link enviado a tu email.'
+        'pending_approval': 'Tu cuenta está esperando aprobación.',
+        'pending_setup': 'Debes configurar tu contraseña primero.'
       };
       return NextResponse.json({ 
         message: statusMessages[user.status as keyof typeof statusMessages] || 'Tu cuenta aún no está activa' 
       }, { status: 403 });
     }
 
-    // Crear el token de sesión
-    const sessionToken = await encrypt({ id: user._id.toString(), email: user.email });
+    // Crear el token de sesión serializado como string
+    const sessionToken = await encrypt({ 
+      id: user._id.toString(), 
+      email: user.email 
+    });
     
-    // Establecer la cookie usando next/headers para máxima compatibilidad con el servidor
-    const cookieStore = await cookies();
-    cookieStore.set('session', sessionToken, {
+    const response = NextResponse.json({ 
+      message: 'Sesión iniciada correctamente',
+      success: true
+    }, { status: 200 });
+
+    // Establecer la cookie de forma segura y compatible con desarrollo
+    response.cookies.set('session', sessionToken, {
       httpOnly: true,
-      secure: false, // Necesario para entornos de desarrollo/workstations
+      secure: false, // Permitir en desarrollo sin HTTPS
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 7, // 7 días
     });
 
-    return NextResponse.json({ message: 'Sesión iniciada correctamente' }, { status: 200 });
+    return response;
   } catch (error: any) {
     console.error('Error en login API:', error);
     return NextResponse.json({ message: 'Error interno al iniciar sesión' }, { status: 500 });
