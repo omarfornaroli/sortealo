@@ -4,7 +4,6 @@ import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import { encrypt } from '@/lib/session';
-import { cookies } from 'next/headers';
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,21 +29,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Tu cuenta aún no está activa' }, { status: 403 });
     }
 
+    // Convertimos el ID a string para evitar problemas de encriptación con objetos complejos
     const sessionToken = await encrypt({ id: user._id.toString(), email: user.email });
     
-    // Establecemos la cookie directamente en el servidor para máxima fiabilidad
-    const cookieStore = await cookies();
-    cookieStore.set('session', sessionToken, {
+    // Creamos la respuesta y establecemos la cookie explícitamente en el objeto de respuesta
+    const response = NextResponse.json({ success: true }, { status: 200 });
+    
+    response.cookies.set('session', sessionToken, {
       httpOnly: true,
-      secure: false, // Permitir en desarrollo
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: 60 * 60 * 24 * 7, // 1 semana
     });
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return response;
 
   } catch (error: any) {
+    console.error('Login error:', error);
     return NextResponse.json({ message: 'Error interno del servidor' }, { status: 500 });
   }
 }

@@ -31,7 +31,7 @@ export default function LoginPage() {
 
       if (res.ok) {
         toast({ title: 'Bienvenido', description: 'Accediendo al panel administrativo...' });
-        // Usamos location.href para asegurar una recarga limpia y que el middleware detecte la cookie
+        // Usamos location.href para asegurar que el navegador cargue la sesión y el middleware la detecte
         window.location.href = '/admin';
       } else {
         toast({ 
