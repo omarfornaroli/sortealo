@@ -9,6 +9,7 @@ import { deleteSession, getSession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 async function getRaffles() {
   await dbConnect();
@@ -23,8 +24,8 @@ async function handleLogout() {
 }
 
 export default async function AdminPage() {
-  // Verificación de sesión secundaria para evitar fugas del middleware
   const session = await getSession();
+  
   if (!session) {
     redirect('/admin/login');
   }
@@ -44,7 +45,7 @@ export default async function AdminPage() {
               Sesión: {session.email}
             </span>
             <form action={handleLogout}>
-              <Button variant="ghost" size="sm" className="gap-2 text-slate-600 hover:text-red-600">
+              <Button variant="ghost" size="sm" type="submit" className="gap-2 text-slate-600 hover:text-red-600">
                 <LogOut className="w-4 h-4" /> Cerrar Sesión
               </Button>
             </form>
@@ -76,12 +77,18 @@ export default async function AdminPage() {
           ) : (
             raffles.map((raffle: any) => (
               <Card key={raffle._id} className="overflow-hidden hover:shadow-xl transition-all border-slate-200 bg-white group">
-                <div className="relative h-48 overflow-hidden">
-                  <img 
-                    src={raffle.imageUrl} 
-                    alt={raffle.name} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                  />
+                <div className="relative h-48 overflow-hidden bg-slate-100">
+                  {raffle.imageUrl ? (
+                    <img 
+                      src={raffle.imageUrl} 
+                      alt={raffle.name} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-300">
+                      <TicketIcon className="w-12 h-12" />
+                    </div>
+                  )}
                   <div className="absolute top-3 right-3">
                     <span className={`text-[10px] px-2 py-1 rounded-full font-bold shadow-sm ${raffle.isFinished ? 'bg-slate-100 text-slate-500' : 'bg-green-500 text-white'}`}>
                       {raffle.isFinished ? 'FINALIZADO' : 'ACTIVO'}

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -14,6 +14,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  // Verificar si ya está logueado al cargar
+  useEffect(() => {
+    fetch('/api/auth/session')
+      .then(res => res.json())
+      .then(data => {
+        if (data.isAuthenticated) {
+          window.location.replace('/admin');
+        }
+      });
+  }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +42,7 @@ export default function LoginPage() {
 
       if (res.ok) {
         toast({ title: 'Bienvenido', description: 'Sesión iniciada correctamente.' });
-        // Forzamos una recarga completa hacia /admin para asegurar que las cookies se procesen
+        // Usar replace para evitar que el usuario vuelva atrás al login
         window.location.replace('/admin');
       } else {
         toast({ 

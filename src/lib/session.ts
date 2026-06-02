@@ -22,7 +22,6 @@ export async function decrypt(session: string | undefined = '') {
     });
     return payload;
   } catch (error) {
-    console.error('Failed to verify session:', error);
     return null;
   }
 }
@@ -35,7 +34,7 @@ export async function createSession(payload: JWTPayload) {
   cookieStore.set('session', session, {
     expires,
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: false, // Cambiado a false para asegurar compatibilidad en desarrollo/studio
     sameSite: 'lax',
     path: '/',
   });
@@ -44,6 +43,7 @@ export async function createSession(payload: JWTPayload) {
 export async function getSession() {
   const cookieStore = await cookies();
   const session = cookieStore.get('session')?.value;
+  if (!session) return null;
   return await decrypt(session);
 }
 
@@ -60,7 +60,7 @@ export async function updateSession() {
   cookieStore.set('session', session, {
     expires,
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: false,
     sameSite: 'lax',
     path: '/',
   });
