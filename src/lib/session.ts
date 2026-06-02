@@ -3,7 +3,7 @@ import 'server-only';
 import { JWTPayload, SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
-const secretKey = process.env.SESSION_SECRET || 'fallback-secret-key-for-dev-1234567890';
+const secretKey = process.env.SESSION_SECRET || 'secure-fallback-key-sortealo-2024';
 const encodedKey = new TextEncoder().encode(secretKey);
 
 export async function encrypt(payload: JWTPayload) {
@@ -22,22 +22,21 @@ export async function decrypt(session: string | undefined = '') {
     });
     return payload;
   } catch (error) {
-    console.error('Error decrypting session:', error);
     return null;
   }
 }
 
 export async function createSession(payload: JWTPayload) {
-  const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const session = await encrypt(payload);
 
   const cookieStore = await cookies();
   cookieStore.set('session', session, {
-    expires,
     httpOnly: true,
-    secure: false, // Importante para desarrollo
+    secure: false, // Requerido para desarrollo en workstations
     sameSite: 'lax',
     path: '/',
+    expires: expiresAt,
   });
 }
 
