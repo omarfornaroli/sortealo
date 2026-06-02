@@ -16,15 +16,19 @@ export default function LoginPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Verificar si ya hay sesión al cargar la página
-    fetch('/api/auth/session')
-      .then(res => res.json())
-      .then(data => {
+    // Verificar si ya hay sesión activa
+    const checkSession = async () => {
+      try {
+        const res = await fetch('/api/auth/session');
+        const data = await res.json();
         if (data.isAuthenticated) {
-          window.location.href = '/admin';
+          window.location.replace('/admin');
         }
-      })
-      .catch(() => {});
+      } catch (err) {
+        console.error('Error verificando sesión inicial');
+      }
+    };
+    checkSession();
   }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -36,15 +40,15 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        toast({ title: 'Bienvenido', description: 'Sesión iniciada correctamente.' });
-        // Usar href en lugar de replace para asegurar que se procesen las cookies
-        window.location.href = '/admin';
+        toast({ title: 'Bienvenido', description: 'Accediendo al panel administrativo...' });
+        // location.replace es más agresivo para asegurar que se limpie el estado del cliente
+        window.location.replace('/admin');
       } else {
         toast({ 
           title: 'Error de acceso', 

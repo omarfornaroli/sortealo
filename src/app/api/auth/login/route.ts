@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
-import { createSession } from '@/lib/session';
+import { encrypt } from '@/lib/session';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,7 +14,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Email y contraseña son requeridos' }, { status: 400 });
     }
 
-    // Búsqueda insensible a mayúsculas para mayor robustez
     const user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user || !user.password) {
@@ -37,10 +36,21 @@ export async function POST(req: NextRequest) {
       }, { status: 403 });
     }
 
-    // Crear sesión guardando solo el ID como string
-    await createSession({ id: user._id.toString(), email: user.email });
+    // Crear el token de sesión
+    const sessionToken = await encrypt({ id: user._id.toString(), email: user.email });
+    
+    // Crear respuesta con la cookie seteada directamente
+    const response = NextResponse.json({ message: 'Sesión iniciada correctamente' }, { status: 200 });
+    
+    response.cookies.set('session', sessionToken, {
+      httpOnly: true,
+      secure: false, // Importante para desarrollo en Workstations
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 7 días
+    });
 
-    return NextResponse.json({ message: 'Sesión iniciada correctamente' }, { status: 200 });
+    return response;
   } catch (error: any) {
     console.error('Error en login API:', error);
     return NextResponse.json({ message: 'Error interno al iniciar sesión' }, { status: 500 });
