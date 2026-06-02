@@ -37,27 +37,27 @@ export async function POST(req: NextRequest) {
       }, { status: 403 });
     }
 
-    // Crear el token de sesión serializado como string
+    // Crear el token de sesión
     const sessionToken = await encrypt({ 
       id: user._id.toString(), 
       email: user.email 
     });
     
-    const response = NextResponse.json({ 
-      message: 'Sesión iniciada correctamente',
-      success: true
-    }, { status: 200 });
-
-    // Establecer la cookie de forma segura y compatible con desarrollo
-    response.cookies.set('session', sessionToken, {
+    // Establecer la cookie usando el helper oficial de Next.js para mayor fiabilidad
+    const cookieStore = await cookies();
+    cookieStore.set('session', sessionToken, {
       httpOnly: true,
-      secure: false, // Permitir en desarrollo sin HTTPS
+      secure: false, // Permitir en desarrollo (Workstation)
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 7, // 7 días
     });
 
-    return response;
+    return NextResponse.json({ 
+      message: 'Sesión iniciada correctamente',
+      success: true
+    }, { status: 200 });
+
   } catch (error: any) {
     console.error('Error en login API:', error);
     return NextResponse.json({ message: 'Error interno al iniciar sesión' }, { status: 500 });

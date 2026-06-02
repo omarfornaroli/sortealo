@@ -3,8 +3,8 @@ import 'server-only';
 import { JWTPayload, SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
-// Usamos una clave de respaldo estática para asegurar consistencia si la variable de entorno falta
-const SESSION_SECRET = process.env.SESSION_SECRET || 'secure-fallback-key-sortealo-static-v3-2024';
+// Usamos una clave de respaldo estática para asegurar consistencia absoluta entre API y Middleware
+const SESSION_SECRET = process.env.SESSION_SECRET || 'secure-fallback-key-sortealo-static-v3-2024-final';
 
 function getEncodedKey() {
   return new TextEncoder().encode(SESSION_SECRET);
@@ -26,7 +26,7 @@ export async function decrypt(session: string | undefined = '') {
     });
     return payload;
   } catch (error) {
-    // Log para depuración en desarrollo
+    // Log para depuración
     console.error('Error al desencriptar sesión (JWT):', error instanceof Error ? error.message : error);
     return null;
   }
