@@ -11,14 +11,18 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const token = searchParams.get('token');
 
+    console.log('--- PROCESANDO APROBACIÓN ---');
+    console.log('Token recibido:', token);
+
     if (!token) {
-      return new NextResponse('<h1>Error</h1><p>Token no proporcionado.</p>', { headers: { 'Content-Type': 'text/html' } });
+      return new NextResponse('<h1>Error</h1><p>Token no proporcionado.</p>', { status: 400, headers: { 'Content-Type': 'text/html' } });
     }
 
     const user = await User.findOne({ approvalToken: token, status: 'pending_approval' });
     
     if (!user) {
-      return new NextResponse('<h1>Error</h1><p>Solicitud no encontrada, inválida o ya procesada.</p>', { headers: { 'Content-Type': 'text/html' } });
+      console.warn('Aprobación fallida: Usuario no encontrado con ese token o ya procesado.');
+      return new NextResponse('<h1>Error</h1><p>La solicitud no fue encontrada, el token es inválido o ya ha sido aprobada previamente.</p>', { status: 404, headers: { 'Content-Type': 'text/html' } });
     }
 
     const setupToken = crypto.randomBytes(32).toString('hex');
@@ -28,7 +32,12 @@ export async function GET(req: NextRequest) {
     user.setupToken = setupToken;
     await user.save();
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
+    console.log('Usuario aprobado correctamente:', user.email);
+
+    // Generar URL base dinámica para el email del usuario
+    const protocol = req.headers.get('x-forwarded-proto') || 'http';
+    const host = req.headers.get('host');
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`;
     
     await sendEmail({
       to: user.email,
@@ -63,7 +72,7 @@ export async function GET(req: NextRequest) {
       headers: { 'Content-Type': 'text/html' }
     });
   } catch (error: any) {
-    console.error('Error en aprobación:', error);
+    console.error('Error crítico en el proceso de aprobación:', error);
     return new NextResponse(`<h1>Error del Servidor</h1><p>${error.message}</p>`, { status: 500, headers: { 'Content-Type': 'text/html' } });
   }
 }

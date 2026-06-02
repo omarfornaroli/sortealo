@@ -14,7 +14,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'El email es requerido' }, { status: 400 });
     }
 
-    // Verificar si el usuario ya existe
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return NextResponse.json({ message: 'Este email ya tiene una solicitud o cuenta activa.' }, { status: 400 });
@@ -31,8 +30,15 @@ export async function POST(req: NextRequest) {
     await newUser.save();
 
     const masterEmail = 'omarfornaroli@gmail.com';
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
     
+    // Generar URL base dinámica
+    const protocol = req.headers.get('x-forwarded-proto') || 'http';
+    const host = req.headers.get('host');
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`;
+    
+    console.log('Generando solicitud de registro para:', email);
+    console.log('URL Base detectada para el link:', baseUrl);
+
     const emailSent = await sendEmail({
       to: masterEmail,
       subject: 'Nueva solicitud de registro administrativo - Sortealo',
@@ -47,6 +53,7 @@ export async function POST(req: NextRequest) {
                Aprobar Registro
             </a>
           </div>
+          <p style="font-size: 12px; color: #94a3b8; margin-top: 20px;">Si el botón no funciona, copia y pega este link: ${baseUrl}/api/auth/approve?token=${approvalToken}</p>
           <p style="font-size: 12px; color: #94a3b8; margin-top: 40px; text-align: center;">Si no reconoces esta solicitud, puedes ignorar este mensaje.</p>
         </div>
       `
@@ -54,7 +61,7 @@ export async function POST(req: NextRequest) {
 
     if (!emailSent) {
       return NextResponse.json({ 
-        message: 'Solicitud guardada en base de datos, pero el servicio de correo falló. Contacta al soporte técnico.' 
+        message: 'Solicitud guardada, pero el envío del correo de aprobación falló. Revisa los logs del servidor.' 
       }, { status: 201 });
     }
 

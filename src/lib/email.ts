@@ -11,7 +11,7 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
   }
 
   const payload = {
-    from: 'no-reply@sortealo.com.ar',
+    from: 'support@posify.website',
     to: to,
     subject: subject,
     html: html
