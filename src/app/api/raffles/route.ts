@@ -6,7 +6,7 @@ import Raffle from '@/models/Raffle';
 export async function GET() {
   await dbConnect();
   try {
-    const raffles = await Raffle.find({});
+    const raffles = await Raffle.find({}).sort({ createdAt: -1 });
     return NextResponse.json(raffles, { status: 200 });
   } catch (error) {
     return NextResponse.json({ message: 'Error fetching raffles', error }, { status: 500 });
@@ -15,10 +15,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   await dbConnect();
-  const { name, description, imageUrl } = await req.json();
-
   try {
-    const newRaffle = new Raffle({ name, description, imageUrl });
+    const data = await req.json();
+    const newRaffle = new Raffle(data);
     await newRaffle.save();
     return NextResponse.json(newRaffle, { status: 201 });
   } catch (error) {

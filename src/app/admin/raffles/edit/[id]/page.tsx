@@ -8,15 +8,20 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ChevronLeft, Save, Loader2, Sparkles } from 'lucide-react';
+import { ChevronLeft, Save, Loader2, Calendar, DollarSign, Ticket } from 'lucide-react';
 import Link from 'next/link';
 
 export default function EditRafflePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [isFinished, setIsFinished] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    imageUrl: '',
+    isFinished: false,
+    ticketPrice: 0,
+    maxTickets: 0,
+    drawDate: '',
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
@@ -26,10 +31,15 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
     fetch(`/api/raffles/${id}`)
       .then(res => res.json())
       .then(data => {
-        setName(data.name);
-        setDescription(data.description);
-        setImageUrl(data.imageUrl);
-        setIsFinished(data.isFinished);
+        setFormData({
+          name: data.name,
+          description: data.description,
+          imageUrl: data.imageUrl,
+          isFinished: data.isFinished,
+          ticketPrice: data.ticketPrice || 0,
+          maxTickets: data.maxTickets || 0,
+          drawDate: data.drawDate ? new Date(data.drawDate).toISOString().slice(0, 16) : '',
+        });
         setLoading(false);
       })
       .catch(() => {
@@ -46,18 +56,18 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
       const res = await fetch(`/api/raffles/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, description, imageUrl, isFinished }),
+        body: JSON.stringify(formData),
       });
 
       if (res.ok) {
-        toast({ title: 'Sorteo Actualizado', description: 'Los cambios se han guardado con éxito.' });
+        toast({ title: 'Actualizado', description: 'Los cambios se guardaron con éxito.' });
         router.push('/admin');
         router.refresh();
       } else {
         throw new Error('Error al actualizar');
       }
     } catch (error) {
-      toast({ title: 'Error', description: 'No se pudo guardar los cambios. Intentá nuevamente.', variant: 'destructive' });
+      toast({ title: 'Error', description: 'No se pudo guardar.', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -65,7 +75,7 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-10 h-10 text-primary animate-spin" />
       </div>
     );
@@ -73,67 +83,103 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="container mx-auto py-10 px-4 max-w-2xl">
-      <Link href="/admin" className="inline-flex items-center text-sm font-bold text-slate-500 hover:text-primary mb-8 group transition-colors">
-        <ChevronLeft className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" />
-        Volver al panel administrativo
+      <Link href="/admin" className="inline-flex items-center text-sm font-bold text-slate-500 hover:text-primary mb-8 transition-colors">
+        <ChevronLeft className="w-4 h-4 mr-1" />
+        Volver al Dashboard
       </Link>
       
-      <Card className="border-slate-200 shadow-2xl bg-white rounded-[2rem] overflow-hidden">
-        <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-8 text-center">
-          <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-             <Sparkles className="w-8 h-8 text-primary" />
-          </div>
-          <CardTitle className="text-3xl font-headline font-bold text-slate-900">Editar Sorteo</CardTitle>
-          <p className="text-slate-500 font-medium">Modifica los detalles del premio seleccionado.</p>
+      <Card className="border-slate-200 shadow-2xl rounded-[2rem] overflow-hidden">
+        <CardHeader className="bg-slate-50/50 p-8 border-b border-slate-100">
+          <CardTitle className="text-3xl font-headline font-bold">Configurar Sorteo</CardTitle>
+          <p className="text-slate-500">Edita los parámetros de participación y premio.</p>
         </CardHeader>
         <CardContent className="p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-slate-500">Nombre del Sorteo</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Nombre del Sorteo</label>
               <Input
-                id="name"
-                placeholder="Ej: iPhone 15 Pro Max"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
                 required
-                className="h-12 bg-slate-50 border-slate-200 rounded-xl focus:bg-white transition-all font-medium"
               />
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Precio Ticket ($)</label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    type="number"
+                    className="pl-9"
+                    value={formData.ticketPrice}
+                    onChange={(e) => setFormData({...formData, ticketPrice: Number(e.target.value)})}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Límite de Tickets</label>
+                <div className="relative">
+                  <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    type="number"
+                    className="pl-9"
+                    value={formData.maxTickets}
+                    onChange={(e) => setFormData({...formData, maxTickets: Number(e.target.value)})}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <label htmlFor="description" className="text-xs font-bold uppercase tracking-wider text-slate-500">Descripción del Premio</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Fecha y Hora de Cierre</label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  type="datetime-local"
+                  className="pl-9"
+                  value={formData.drawDate}
+                  onChange={(e) => setFormData({...formData, drawDate: e.target.value})}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Descripción Detallada</label>
               <Textarea
-                id="description"
-                placeholder="Detalles del premio, especificaciones y condiciones..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                className="min-h-[120px]"
+                value={formData.description}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
                 required
-                className="bg-slate-50 border-slate-200 rounded-xl focus:bg-white transition-all min-h-[150px] font-medium leading-relaxed"
               />
             </div>
+
             <div className="space-y-2">
-              <label htmlFor="imageUrl" className="text-xs font-bold uppercase tracking-wider text-slate-500">URL de la Imagen (Resolución sugerida: 1200x800)</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Imagen del Premio (URL)</label>
               <Input
-                id="imageUrl"
-                placeholder="https://images.unsplash.com/..."
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
+                value={formData.imageUrl}
+                onChange={(e) => setFormData({...formData, imageUrl: e.target.value})}
                 required
-                className="h-12 bg-slate-50 border-slate-200 rounded-xl focus:bg-white transition-all font-medium"
               />
             </div>
+
             <div className="flex items-center space-x-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
               <input 
                 type="checkbox" 
                 id="isFinished" 
-                checked={isFinished} 
-                onChange={(e) => setIsFinished(e.target.checked)}
-                className="w-5 h-5 rounded-md border-slate-300 text-primary focus:ring-primary"
+                checked={formData.isFinished} 
+                onChange={(e) => setFormData({...formData, isFinished: e.target.checked})}
+                className="w-5 h-5"
               />
-              <label htmlFor="isFinished" className="text-sm font-bold text-slate-700 cursor-pointer select-none">Marcar como finalizado</label>
+              <label htmlFor="isFinished" className="text-sm font-bold text-slate-700">Cerrar sorteo manualmente</label>
             </div>
-            <Button type="submit" className="w-full h-14 text-lg font-bold rounded-xl shadow-lg shadow-primary/20 gap-2" disabled={saving}>
+
+            <Button type="submit" className="w-full h-14 text-lg font-bold rounded-xl shadow-lg" disabled={saving}>
               {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-              {saving ? 'Guardando cambios...' : 'Guardar Cambios'}
+              {saving ? 'Guardando...' : 'Guardar Cambios'}
             </Button>
           </form>
         </CardContent>

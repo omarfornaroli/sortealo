@@ -21,12 +21,12 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   await dbConnect();
   const { id } = params;
-  const { name, description, imageUrl, isFinished } = await req.json();
+  const data = await req.json();
 
   try {
     const updatedRaffle = await Raffle.findByIdAndUpdate(
       id,
-      { name, description, imageUrl, isFinished },
+      { ...data },
       { new: true }
     );
     if (!updatedRaffle) {
