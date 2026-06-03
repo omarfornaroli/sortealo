@@ -1,5 +1,4 @@
-
-'use client';
+"use client";
 
 import { useState, useEffect, use } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -14,9 +13,11 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
   const [raffle, setRaffle] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [mounted, setMounted] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
+    setMounted(true);
     fetch(`/api/raffles/${id}`)
       .then(res => res.json())
       .then(data => {
@@ -116,7 +117,7 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-2 text-slate-400 text-xs font-medium">
                       <Calendar className="w-3.5 h-3.5" />
-                      {new Date(p.purchaseDate).toLocaleDateString()}
+                      {mounted ? new Date(p.purchaseDate).toLocaleDateString() : '...'}
                     </div>
                   </td>
                 </tr>

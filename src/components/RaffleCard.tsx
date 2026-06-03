@@ -1,4 +1,3 @@
-
 'use client';
 
 import { IRaffle } from '@/models/Raffle';
@@ -6,12 +5,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Ticket, ArrowRight, Calendar } from 'lucide-react';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 interface RaffleCardProps {
   raffle: IRaffle & { _id: string };
 }
 
 export default function RaffleCard({ raffle }: RaffleCardProps) {
+  const [formattedDate, setFormattedDate] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Formatear la fecha solo en el cliente para evitar errores de hidratación
+    setFormattedDate(new Date(raffle.drawDate).toLocaleDateString());
+  }, [raffle.drawDate]);
+
   return (
     <Card className="overflow-hidden border-slate-200 bg-white shadow-md hover:shadow-2xl transition-all duration-500 group rounded-[2rem]">
       <div className="relative aspect-video overflow-hidden">
@@ -41,7 +48,7 @@ export default function RaffleCard({ raffle }: RaffleCardProps) {
         </CardTitle>
         <div className="flex items-center gap-2 mt-2 text-slate-400 font-bold text-xs uppercase tracking-widest">
           <Calendar className="w-4 h-4 text-primary" />
-          Sortea: {new Date(raffle.drawDate).toLocaleDateString()}
+          Sortea: {formattedDate || 'Cargando...'}
         </div>
       </CardHeader>
       <CardContent className="px-8 pb-4 pt-0">

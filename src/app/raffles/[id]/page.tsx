@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Navbar } from '@/components/layout/Navbar';
@@ -22,6 +21,7 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
   const [purchasing, setPurchasing] = useState(false);
   const [success, setSuccess] = useState(false);
   const [myTickets, setMyTickets] = useState<string[]>([]);
+  const [formattedDrawDate, setFormattedDrawDate] = useState<string | null>(null);
   
   const [quantity, setQuantity] = useState(1);
   const [formData, setFormData] = useState({
@@ -38,6 +38,8 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
       .then(data => {
         setRaffle(data);
         setLoading(false);
+        // Formatear fecha solo en cliente
+        setFormattedDrawDate(new Date(data.drawDate).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' }));
       });
   }, [id]);
 
@@ -49,7 +51,6 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
     }
 
     setPurchasing(true);
-    // Simulación de Mercado Pago
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     try {
@@ -127,7 +128,6 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
           </Link>
 
           <div className="grid lg:grid-cols-2 gap-16">
-            {/* Left: Prize Info */}
             <div className="space-y-10">
               <div className="relative aspect-[4/3] rounded-[3rem] overflow-hidden border border-slate-100 shadow-2xl">
                 <Image src={raffle.imageUrl} alt={raffle.name} fill className="object-cover" />
@@ -151,7 +151,7 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
                     </div>
                     <div>
                       <span className="block text-[10px] uppercase text-slate-400 font-black tracking-widest mb-1">Fecha Sorteo</span>
-                      <span className="font-headline font-bold text-lg">{new Date(raffle.drawDate).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}</span>
+                      <span className="font-headline font-bold text-lg">{formattedDrawDate || 'Cargando...'}</span>
                     </div>
                   </div>
                   <div className="bg-slate-50 border border-slate-100 p-8 rounded-[2.5rem] flex items-center gap-5 transition-transform hover:scale-[1.02]">
@@ -179,7 +179,6 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
               </div>
             </div>
 
-            {/* Right: Purchase Form */}
             <div className="space-y-8">
               <Card className="rounded-[3.5rem] border-slate-100 bg-white shadow-2xl overflow-hidden">
                 <div className="p-10 space-y-10">
