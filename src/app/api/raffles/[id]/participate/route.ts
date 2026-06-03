@@ -6,9 +6,11 @@ import Raffle from '@/models/Raffle';
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   await dbConnect();
   const { id } = params;
-  const { email, name, dni, phone, quantity } = await req.json();
-
+  
   try {
+    const body = await req.json();
+    const { email, name, dni, phone, quantity } = body;
+
     const raffle = await Raffle.findById(id);
     if (!raffle) {
       return NextResponse.json({ message: 'Sorteo no encontrado' }, { status: 404 });
@@ -22,24 +24,34 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ message: 'No hay suficientes tickets disponibles' }, { status: 400 });
     }
 
-    // Generar números aleatorios únicos de 6 dígitos para el usuario
+    // Obtener todos los tickets ya vendidos para evitar duplicados en este sorteo
+    const existingTickets = new Set(
+      raffle.participants.flatMap((p: any) => p.tickets)
+    );
+
+    // Generar números aleatorios únicos de 6 dígitos
     const generatedTickets: string[] = [];
     while (generatedTickets.length < quantity) {
       const ticket = Math.floor(100000 + Math.random() * 900000).toString();
-      // En un entorno real deberíamos verificar que el ticket no exista ya en el raffle.participants
-      generatedTickets.push(ticket);
+      if (!existingTickets.has(ticket)) {
+        generatedTickets.push(ticket);
+        existingTickets.add(ticket); // Evitar duplicados en la misma transacción
+      }
     }
 
+    // Importante: Empujar el objeto respetando el esquema IParticipant
     raffle.participants.push({
-      email: email.toLowerCase(),
-      name,
-      dni,
-      phone,
+      email: email.toLowerCase().trim(),
+      name: name.trim(),
+      dni: dni.toString().trim(),
+      phone: phone.trim(),
       tickets: generatedTickets,
       purchaseDate: new Date()
     });
 
     raffle.soldTickets += quantity;
+    
+    // El save() de Mongoose disparará la validación del esquema
     await raffle.save();
 
     return NextResponse.json({ 
@@ -49,6 +61,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }, { status: 200 });
     
   } catch (error: any) {
-    return NextResponse.json({ message: 'Error al procesar la participación', error: error.message }, { status: 500 });
+    console.error('Error en participate API:', error);
+    return NextResponse.json({ 
+      message: 'Error al procesar la participación', 
+      error: error.message 
+    }, { status: 500 });
   }
 }
