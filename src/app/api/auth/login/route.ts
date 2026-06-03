@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
     const sessionToken = await encrypt(userData);
     
     // 1. Establecer cookie para el Middleware (HTTP-Only)
+    // Usamos cookies().set() que es el estándar de Next.js 15
     const cookieStore = await cookies();
     cookieStore.set('session', sessionToken, {
       httpOnly: true,
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
       maxAge: 60 * 60 * 24 * 7, // 1 semana
     });
 
-    console.log(`--- API LOGIN: Sesión exitosa generada para ${email} ---`);
+    console.log(`--- API LOGIN: Sesión exitosa generada para ${email}. Cookie establecida. ---`);
 
     // 2. Devolver token para localStorage (Cliente)
     return NextResponse.json({ 

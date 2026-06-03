@@ -6,26 +6,26 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const sessionCookie = req.cookies.get('session')?.value;
 
-  console.log(`--- MIDDLEWARE: Validando acceso a ${pathname} ---`);
-
   // 1. Proteger rutas administrativas
   if (pathname.startsWith('/admin')) {
+    console.log(`--- MIDDLEWARE: Validando acceso a ${pathname} ---`);
+    
     if (!sessionCookie) {
-      console.warn('--- MIDDLEWARE: Sin cookie de sesión en /admin. Redirigiendo... ---');
+      console.warn('--- MIDDLEWARE: No se encontró cookie de sesión. Redirigiendo a /auth/login ---');
       return NextResponse.redirect(new URL('/auth/login', req.url));
     }
 
     try {
       const session = await decrypt(sessionCookie);
       if (!session) {
-        console.error('--- MIDDLEWARE: Cookie inválida o malformada ---');
+        console.error('--- MIDDLEWARE: Token de cookie inválido o expirado. ---');
         const response = NextResponse.redirect(new URL('/auth/login', req.url));
         response.cookies.delete('session');
         return response;
       }
-      console.log('--- MIDDLEWARE: Sesión válida para', session.email, '---');
+      console.log('--- MIDDLEWARE: Acceso permitido para', session.email, '---');
     } catch (e) {
-      console.error('--- MIDDLEWARE: Error al desencriptar sesión ---', e);
+      console.error('--- MIDDLEWARE: Error crítico al validar sesión ---', e);
       return NextResponse.redirect(new URL('/auth/login', req.url));
     }
   }
@@ -35,7 +35,7 @@ export async function middleware(req: NextRequest) {
     if (sessionCookie) {
       const session = await decrypt(sessionCookie);
       if (session) {
-        console.log('--- MIDDLEWARE: Ya logueado, saltando a /admin ---');
+        console.log('--- MIDDLEWARE: Usuario ya autenticado. Redirigiendo de auth a /admin ---');
         return NextResponse.redirect(new URL('/admin', req.url));
       }
     }

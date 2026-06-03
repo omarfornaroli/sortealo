@@ -18,21 +18,21 @@ export default function AdminPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      console.log('--- ADMIN: Verificando sesión en localStorage ---');
+      console.log('--- ADMIN DASHBOARD: Verificando localStorage ---');
       const token = localStorage.getItem('adminToken');
-      const savedSession = localStorage.getItem('userSession');
+      const savedSessionStr = localStorage.getItem('userSession');
       
-      if (!token || !savedSession) {
-        console.warn('--- ADMIN: No se encontró token o sesión en localStorage. Redirigiendo... ---');
-        // Marcar error para evitar bucle en login
+      if (!token) {
+        console.warn('--- ADMIN DASHBOARD: No se encontró token en localStorage. ---');
         sessionStorage.setItem('authError', 'true');
         window.location.replace('/auth/login');
         return;
       }
 
       try {
-        const parsedSession = JSON.parse(savedSession);
-        setSession(parsedSession);
+        if (savedSessionStr) {
+          setSession(JSON.parse(savedSessionStr));
+        }
         
         // Obtener datos del backend usando el token de localStorage en el header
         const res = await fetch('/api/raffles?admin=true', {
@@ -43,7 +43,7 @@ export default function AdminPage() {
 
         if (!res.ok) {
           if (res.status === 401) {
-            console.error('--- ADMIN: Token rechazado por el servidor (401) ---');
+            console.error('--- ADMIN DASHBOARD: Token rechazado por el backend (401) ---');
             localStorage.removeItem('adminToken');
             localStorage.removeItem('userSession');
             sessionStorage.setItem('authError', 'true');
@@ -65,7 +65,7 @@ export default function AdminPage() {
           totalParticipants
         });
       } catch (error) {
-        console.error('--- ADMIN: Error crítico al cargar datos ---', error);
+        console.error('--- ADMIN DASHBOARD: Error al cargar datos ---', error);
         toast({ 
           title: 'Error de conexión', 
           description: 'No se pudieron cargar los datos del servidor.', 
@@ -92,7 +92,7 @@ export default function AdminPage() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center space-y-4">
           <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto" />
-          <p className="text-slate-500 font-medium">Validando acceso administrativo...</p>
+          <p className="text-slate-500 font-medium">Cargando panel de control...</p>
         </div>
       </div>
     );
@@ -109,15 +109,15 @@ export default function AdminPage() {
             <div className="bg-primary p-2 rounded-xl shadow-lg shadow-primary/20">
               <LayoutDashboard className="w-6 h-6 text-white" />
             </div>
-            <span className="font-bold text-2xl text-slate-900 tracking-tight font-headline">Panel Sortealo</span>
+            <span className="font-bold text-2xl text-slate-900 tracking-tight font-headline">Sortealo Admin</span>
           </Link>
           <div className="flex items-center gap-6">
             <div className="hidden md:flex flex-col items-end">
-              <span className="text-sm font-bold text-slate-900">{session?.email}</span>
-              <span className="text-[10px] text-primary font-black uppercase tracking-widest">Administrador</span>
+              <span className="text-sm font-bold text-slate-900">{session?.email || 'Administrador'}</span>
+              <span className="text-[10px] text-primary font-black uppercase tracking-widest">Panel Activo</span>
             </div>
             <Button onClick={handleLogout} variant="ghost" className="gap-2 text-slate-500 hover:text-red-600 hover:bg-red-50 font-bold transition-all rounded-xl">
-              <LogOut className="w-5 h-5" /> <span className="hidden sm:inline">Cerrar Sesión</span>
+              <LogOut className="w-5 h-5" /> <span className="hidden sm:inline">Salir</span>
             </Button>
           </div>
         </div>
@@ -126,8 +126,8 @@ export default function AdminPage() {
       <div className="container mx-auto py-12 px-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
           <div>
-            <h1 className="text-5xl font-headline font-bold text-slate-900 tracking-tight">Gestión General</h1>
-            <p className="text-slate-500 mt-2 text-lg font-medium">Control total sobre premios, participantes y sorteos.</p>
+            <h1 className="text-5xl font-headline font-bold text-slate-900 tracking-tight">Gestión de Premios</h1>
+            <p className="text-slate-500 mt-2 text-lg font-medium">Configura tus sorteos y realiza el sorteo de ganadores.</p>
           </div>
           <Button asChild className="gap-2 shadow-2xl shadow-primary/30 h-14 px-8 rounded-2xl font-bold text-lg">
             <Link href="/admin/raffles/new">
@@ -160,10 +160,10 @@ export default function AdminPage() {
         <Tabs defaultValue="active" className="space-y-8">
           <TabsList className="bg-white border border-slate-200 p-1.5 rounded-2xl h-16 shadow-sm">
             <TabsTrigger value="active" className="rounded-xl px-10 font-bold text-base data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
-              Sorteos Activos
+              Vigentes
             </TabsTrigger>
             <TabsTrigger value="history" className="rounded-xl px-10 font-bold text-base data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
-              Historial de Premios
+              Historial
             </TabsTrigger>
           </TabsList>
 
@@ -171,10 +171,10 @@ export default function AdminPage() {
             {activeRaffles.length === 0 ? (
               <div className="py-24 text-center border-3 border-dashed rounded-[3rem] border-slate-200 bg-white">
                 <TicketIcon className="w-20 h-20 text-slate-100 mx-auto mb-6" />
-                <h3 className="text-2xl font-bold text-slate-900">No hay sorteos vigentes</h3>
-                <p className="text-slate-500 mb-8 max-w-sm mx-auto">Comienza publicando un nuevo premio para tus usuarios.</p>
+                <h3 className="text-2xl font-bold text-slate-900">No hay sorteos activos</h3>
+                <p className="text-slate-500 mb-8 max-w-sm mx-auto">Crea tu primer sorteo para empezar a recibir participaciones.</p>
                 <Button asChild variant="outline" className="rounded-xl h-12 px-8 font-bold">
-                  <Link href="/admin/raffles/new">Crear Primer Sorteo</Link>
+                  <Link href="/admin/raffles/new">Crear Sorteo</Link>
                 </Button>
               </div>
             ) : (
@@ -186,8 +186,8 @@ export default function AdminPage() {
             {finishedRaffles.length === 0 ? (
               <div className="py-24 text-center border-3 border-dashed rounded-[3rem] border-slate-200 bg-white">
                 <Trophy className="w-20 h-20 text-slate-100 mx-auto mb-6" />
-                <h3 className="text-2xl font-bold text-slate-900">Sin registros históricos</h3>
-                <p className="text-slate-500">Aquí verás los detalles de los ganadores de sorteos pasados.</p>
+                <h3 className="text-2xl font-bold text-slate-900">Historial vacío</h3>
+                <p className="text-slate-500">Aquí aparecerán los sorteos que ya tengan un ganador asignado.</p>
               </div>
             ) : (
               <AdminRaffleList initialRaffles={finishedRaffles} />
