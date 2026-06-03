@@ -13,7 +13,6 @@ interface HeroProps {
 export function Hero({ featuredRaffle }: HeroProps) {
   return (
     <section className="relative min-h-[90vh] flex items-center pt-20 overflow-hidden">
-      {/* Background elements */}
       <div className="absolute inset-0 z-0">
         <Image 
           src="https://picsum.photos/seed/elite-bg/1920/1080" 
@@ -32,11 +31,17 @@ export function Hero({ featuredRaffle }: HeroProps) {
             La plataforma de sorteos más confiable
           </div>
           
-          <h1 className="text-5xl lg:text-7xl font-headline font-bold leading-tight">
+          <h1 
+            className="text-5xl lg:text-7xl font-headline font-bold leading-tight"
+            style={{ color: featuredRaffle?.featuredTitleColor || 'inherit' }}
+          >
             Tu próxima <span className="text-primary italic">experiencia</span> de lujo comienza aquí.
           </h1>
           
-          <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
+          <p 
+            className="text-lg max-w-lg leading-relaxed font-medium"
+            style={{ color: featuredRaffle?.featuredSubtitleColor || '#64748b' }}
+          >
             Participa por autos de alta gama, motos de competición y tecnología de punta. 
             Seguridad garantizada y transparencia total en cada sorteo.
           </p>

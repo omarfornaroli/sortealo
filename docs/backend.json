@@ -15,6 +15,9 @@
         "description": { "type": "string" },
         "imageUrl": { "type": "string" },
         "status": { "type": "string", "enum": ["active", "completed", "cancelled"] },
+        "isFeatured": { "type": "boolean" },
+        "featuredTitleColor": { "type": "string", "description": "Hex color for the title in featured view" },
+        "featuredSubtitleColor": { "type": "string", "description": "Hex color for the subtitle in featured view" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["title", "ticketPrice", "maxTickets", "drawDate"]

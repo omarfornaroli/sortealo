@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { ShieldCheck, Ticket, User, Clock, ChevronLeft, CreditCard, Loader2, CheckCircle2, AlertCircle, FlaskConical } from 'lucide-react';
+import { ShieldCheck, Ticket, User, Clock, ChevronLeft, CreditCard, Loader2, CheckCircle2, FlaskConical, Fingerprint } from 'lucide-react';
 import { useState, useEffect, use, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -30,6 +30,7 @@ function RaffleContent({ id }: { id: string }) {
   const [quantity, setQuantity] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
+    dni: '',
     phone: '',
     email: ''
   });
@@ -52,23 +53,22 @@ function RaffleContent({ id }: { id: string }) {
       });
   }, [id, toast]);
 
-  // Manejar retorno de Mercado Pago
   useEffect(() => {
     const status = searchParams.get('status');
     const name = searchParams.get('name');
+    const dni = searchParams.get('dni');
     const email = searchParams.get('email');
     const phone = searchParams.get('phone');
     const qty = searchParams.get('qty');
 
     if (status === 'success' && name && email && !success && !isProcessingReturn) {
       setIsProcessingReturn(true);
-      setFormData({ name, email, phone: phone || '' });
+      setFormData({ name, dni: dni || '', email, phone: phone || '' });
       
-      // Registrar la participación después del pago exitoso
       fetch(`/api/raffles/${id}/participate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone: phone || '', quantity: parseInt(qty || '1') }),
+        body: JSON.stringify({ name, dni, email, phone: phone || '', quantity: parseInt(qty || '1') }),
       })
       .then(res => res.json())
       .then(data => {
@@ -81,7 +81,7 @@ function RaffleContent({ id }: { id: string }) {
         }
       })
       .catch(() => {
-        toast({ title: 'Error crítico', description: 'El pago se realizó pero hubo un error al registrar tus números. Por favor contáctanos.', variant: 'destructive' });
+        toast({ title: 'Error crítico', description: 'El pago se realizó pero hubo un error al registrar tus números.', variant: 'destructive' });
       })
       .finally(() => {
         setIsProcessingReturn(false);
@@ -113,8 +113,8 @@ function RaffleContent({ id }: { id: string }) {
 
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.phone) {
-      toast({ title: 'Atención', description: 'Por favor completa todos tus datos de contacto.', variant: 'destructive' });
+    if (!formData.name || !formData.dni || !formData.email || !formData.phone) {
+      toast({ title: 'Atención', description: 'Por favor completa todos tus datos.', variant: 'destructive' });
       return;
     }
 
@@ -128,14 +128,13 @@ function RaffleContent({ id }: { id: string }) {
           raffleId: id,
           raffleName: raffle.name,
           unitPrice: totalPrice,
-          quantity: 1, // Enviamos como un solo item bundle
+          quantity: 1,
           user: formData
         }),
       });
 
       const data = await res.json();
       if (res.ok && data.init_point) {
-        // Redirigir a Mercado Pago
         window.location.href = data.init_point;
       } else {
         throw new Error(data.message || 'Error al generar el pago');
@@ -147,7 +146,7 @@ function RaffleContent({ id }: { id: string }) {
   };
 
   const handleTestPurchase = async () => {
-    if (!formData.name || !formData.email || !formData.phone) {
+    if (!formData.name || !formData.dni || !formData.email || !formData.phone) {
       toast({ title: 'Atención', description: 'Por favor completa tus datos para la prueba.', variant: 'destructive' });
       return;
     }
@@ -206,13 +205,10 @@ function RaffleContent({ id }: { id: string }) {
                 </span>
               ))}
             </div>
-            <p className="text-sm text-slate-400">Te enviamos una copia de tus números a {formData.email}.</p>
+            <p className="text-sm text-slate-400">Te enviamos una copia a {formData.email}.</p>
             <div className="flex flex-col gap-4">
               <Button asChild className="w-full h-14 rounded-2xl text-lg font-bold">
                 <Link href="/">Volver al Inicio</Link>
-              </Button>
-              <Button variant="ghost" onClick={() => setSuccess(false)} className="text-slate-400">
-                Seguir participando
               </Button>
             </div>
           </Card>
@@ -225,7 +221,6 @@ function RaffleContent({ id }: { id: string }) {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
-      
       <main className="flex-1 pt-24 pb-20">
         <div className="container mx-auto px-4">
           <Link href="/" className="inline-flex items-center text-sm font-bold text-slate-400 hover:text-primary mb-8 group transition-colors">
@@ -237,11 +232,6 @@ function RaffleContent({ id }: { id: string }) {
             <div className="space-y-10">
               <div className="relative aspect-[4/3] rounded-[3rem] overflow-hidden border border-slate-100 shadow-2xl">
                 {raffle.imageUrl && <Image src={raffle.imageUrl} alt={raffle.name} fill className="object-cover" priority />}
-                <div className="absolute top-8 left-8">
-                  <Badge className="bg-primary text-white font-black px-6 py-2 text-sm uppercase rounded-full shadow-lg border-2 border-white/20">
-                    Sorteo en Curso
-                  </Badge>
-                </div>
               </div>
 
               <div className="space-y-8">
@@ -249,43 +239,28 @@ function RaffleContent({ id }: { id: string }) {
                   <h1 className="text-5xl lg:text-6xl font-headline font-bold mb-6 text-slate-900 leading-tight">{raffle.name}</h1>
                   <p className="text-slate-500 text-xl leading-relaxed font-medium">{raffle.description}</p>
                 </div>
-
                 <div className="grid sm:grid-cols-2 gap-6 pt-4">
-                  <div className="bg-slate-50 border border-slate-100 p-8 rounded-[2.5rem] flex items-center gap-5 transition-transform hover:scale-[1.02]">
-                    <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center">
-                      <Clock className="text-primary w-7 h-7" />
-                    </div>
+                  <div className="bg-slate-50 border border-slate-100 p-8 rounded-[2.5rem] flex items-center gap-5">
+                    <Clock className="text-primary w-7 h-7" />
                     <div>
-                      <span className="block text-[10px] uppercase text-slate-400 font-black tracking-widest mb-1">Fecha Sorteo</span>
+                      <span className="block text-[10px] uppercase text-slate-400 font-black mb-1">Fecha Sorteo</span>
                       <span className="font-headline font-bold text-lg">{formattedDrawDate || '...'}</span>
                     </div>
                   </div>
-                  <div className="bg-slate-50 border border-slate-100 p-8 rounded-[2.5rem] flex items-center gap-5 transition-transform hover:scale-[1.02]">
-                    <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center">
-                      <Ticket className="text-primary w-7 h-7" />
-                    </div>
+                  <div className="bg-slate-50 border border-slate-100 p-8 rounded-[2.5rem] flex items-center gap-5">
+                    <Ticket className="text-primary w-7 h-7" />
                     <div>
-                      <span className="block text-[10px] uppercase text-slate-400 font-black tracking-widest mb-1">Precio Chance</span>
+                      <span className="block text-[10px] uppercase text-slate-400 font-black mb-1">Precio Chance</span>
                       <span className="font-headline font-bold text-2xl text-primary">${ticketPrice}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-4 bg-slate-900 p-10 rounded-[3rem] shadow-2xl text-white">
-                  <div className="flex justify-between items-end mb-2">
-                    <span className="text-xs font-black uppercase tracking-widest text-slate-400">Vendido</span>
-                    <span className="text-3xl font-black text-primary">{Math.round(progress)}%</span>
-                  </div>
                   <Progress value={progress} className="h-4 bg-slate-800" />
                   <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-500 pt-2">
-                    <span className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-primary" /> 
-                      {(soldTickets).toLocaleString()} vendidos
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Ticket className="w-4 h-4 text-primary" /> 
-                      {Math.max(0, (raffle.maxTickets || 0) - soldTickets).toLocaleString()} restantes
-                    </span>
+                    <span>{soldTickets.toLocaleString()} vendidos</span>
+                    <span>{Math.max(0, raffle.maxTickets - soldTickets).toLocaleString()} restantes</span>
                   </div>
                 </div>
               </div>
@@ -302,49 +277,48 @@ function RaffleContent({ id }: { id: string }) {
                           key={bundle.qty}
                           type="button"
                           onClick={() => setQuantity(bundle.qty)}
-                          className={`relative p-6 rounded-3xl border-2 text-left transition-all group ${quantity === bundle.qty ? 'border-primary bg-primary/5 shadow-inner' : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50'}`}
+                          className={`relative p-6 rounded-3xl border-2 text-left transition-all ${quantity === bundle.qty ? 'border-primary bg-primary/5 shadow-inner' : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50'}`}
                         >
-                          {bundle.badge && (
-                            <span className="absolute -top-3 -right-3 bg-amber-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg">
-                              {bundle.badge}
-                            </span>
-                          )}
+                          {bundle.badge && <span className="absolute -top-3 -right-3 bg-amber-500 text-white text-[10px] font-black px-3 py-1 rounded-full">{bundle.badge}</span>}
                           <div className={`text-xl font-black mb-1 ${quantity === bundle.qty ? 'text-primary' : 'text-slate-900'}`}>{bundle.label}</div>
                           <div className="text-sm font-bold text-slate-400">${getBundlePrice(bundle.qty).toLocaleString()}</div>
                         </button>
                       ))}
                     </div>
-                    <div className="pt-2">
-                      <Label className="text-[10px] uppercase font-black text-slate-400 mb-3 block tracking-widest">Cantidad personalizada</Label>
-                      <Input 
-                        type="number" 
-                        min="1" 
-                        value={quantity} 
-                        onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                        className="h-14 bg-slate-50 rounded-2xl border-slate-200 text-lg font-bold text-center"
-                      />
-                    </div>
                   </div>
 
                   <form onSubmit={handlePayment} className="space-y-6 pt-10 border-t border-slate-100">
-                    <h3 className="text-3xl font-headline font-bold text-slate-900">2. Tus datos de contacto</h3>
+                    <h3 className="text-3xl font-headline font-bold text-slate-900">2. Tus datos</h3>
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label className="text-xs font-bold text-slate-500">Nombre Completo</Label>
                         <Input 
-                          placeholder="Ej: Juan Pérez" 
-                          className="h-14 bg-slate-50 rounded-2xl border-slate-200 font-medium" 
+                          placeholder="Juan Pérez" 
+                          className="h-14 bg-slate-50 rounded-2xl" 
                           value={formData.name}
                           onChange={(e) => setFormData({...formData, name: e.target.value})}
                           required
                         />
                       </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold text-slate-500">DNI</Label>
+                        <div className="relative">
+                          <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                          <Input 
+                            placeholder="Número de documento" 
+                            className="h-14 bg-slate-50 rounded-2xl pl-12" 
+                            value={formData.dni}
+                            onChange={(e) => setFormData({...formData, dni: e.target.value})}
+                            required
+                          />
+                        </div>
+                      </div>
                       <div className="grid sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label className="text-xs font-bold text-slate-500">Teléfono / WhatsApp</Label>
+                          <Label className="text-xs font-bold text-slate-500">WhatsApp</Label>
                           <Input 
-                            placeholder="Con código de área" 
-                            className="h-14 bg-slate-50 rounded-2xl border-slate-200 font-medium"
+                            placeholder="Ej: 1122334455" 
+                            className="h-14 bg-slate-50 rounded-2xl"
                             value={formData.phone}
                             onChange={(e) => setFormData({...formData, phone: e.target.value})}
                             required
@@ -354,8 +328,8 @@ function RaffleContent({ id }: { id: string }) {
                           <Label className="text-xs font-bold text-slate-500">Email</Label>
                           <Input 
                             type="email" 
-                            placeholder="Para tus números" 
-                            className="h-14 bg-slate-50 rounded-2xl border-slate-200 font-medium"
+                            placeholder="tu@email.com" 
+                            className="h-14 bg-slate-50 rounded-2xl"
                             value={formData.email}
                             onChange={(e) => setFormData({...formData, email: e.target.value})}
                             required
@@ -368,50 +342,30 @@ function RaffleContent({ id }: { id: string }) {
                       <Button 
                         type="submit"
                         disabled={purchasing}
-                        className="w-full h-20 bg-[#009EE3] text-white text-2xl font-black rounded-3xl hover:bg-[#008AC9] shadow-2xl shadow-blue-500/30 flex items-center justify-center gap-4 transition-all hover:scale-[1.02]"
+                        className="w-full h-20 bg-[#009EE3] text-white text-2xl font-black rounded-3xl"
                       >
                         {purchasing ? <Loader2 className="animate-spin w-8 h-8" /> : <CreditCard className="w-8 h-8" />}
                         {purchasing ? 'GENERANDO PAGO...' : 'PAGAR CON MERCADO PAGO'}
                       </Button>
 
-                      {/* Botón de Test Temporal */}
                       <Button 
                         type="button"
                         variant="outline"
                         onClick={handleTestPurchase}
                         disabled={purchasing}
-                        className="w-full h-14 border-dashed border-primary text-primary hover:bg-primary/5 rounded-2xl font-bold gap-2"
+                        className="w-full h-14 border-dashed border-primary text-primary rounded-2xl font-bold"
                       >
                         {purchasing ? <Loader2 className="animate-spin w-4 h-4" /> : <FlaskConical className="w-5 h-5" />}
-                        TEST: COMPRA DIRECTA (OMITIR PAGO)
+                        TEST: COMPRA DIRECTA
                       </Button>
-
-                      <div className="flex items-center justify-center gap-3 mt-6 text-xs text-slate-400 font-bold uppercase tracking-widest">
-                        <ShieldCheck className="w-5 h-5 text-green-500" />
-                        Transacción Segura via Mercado Pago
-                      </div>
                     </div>
                   </form>
                 </div>
               </Card>
-
-              <div className="bg-slate-50 rounded-[2.5rem] p-8 border border-slate-200 space-y-4">
-                <h4 className="font-bold text-slate-900 flex items-center gap-3">
-                  <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <ShieldCheck className="text-primary w-5 h-5" />
-                  </div>
-                  Compromiso de Transparencia
-                </h4>
-                <p className="text-sm text-slate-500 leading-relaxed font-medium">
-                  Al completar el pago, nuestro sistema te asignará instantáneamente {quantity} números aleatorios de 6 dígitos. 
-                  Garantizamos que cada número es único y no puede ser duplicado por otro participante.
-                </p>
-              </div>
             </div>
           </div>
         </div>
       </main>
-
       <Footer />
     </div>
   );

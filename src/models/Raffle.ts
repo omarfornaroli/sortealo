@@ -4,6 +4,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IParticipant {
   email: string;
   name: string;
+  dni: string;
   phone: string;
   tickets: string[];
   purchaseDate: Date;
@@ -16,6 +17,8 @@ export interface IRaffle extends Document {
   participants: IParticipant[];
   isFinished: boolean;
   isFeatured: boolean;
+  featuredTitleColor?: string;
+  featuredSubtitleColor?: string;
   ticketPrice: number;
   maxTickets: number;
   soldTickets: number;
@@ -27,6 +30,7 @@ export interface IRaffle extends Document {
 const ParticipantSchema = new Schema({
   email: { type: String, required: true },
   name: { type: String, required: true },
+  dni: { type: String, required: true },
   phone: { type: String, required: true },
   tickets: [{ type: String }],
   purchaseDate: { type: Date, default: Date.now }
@@ -39,6 +43,8 @@ const RaffleSchema: Schema = new Schema({
   participants: [ParticipantSchema],
   isFinished: { type: Boolean, default: false },
   isFeatured: { type: Boolean, default: false },
+  featuredTitleColor: { type: String, default: '#ffffff' },
+  featuredSubtitleColor: { type: String, default: '#94a3b8' },
   ticketPrice: { type: Number, default: 0 },
   maxTickets: { type: Number, default: 0 },
   soldTickets: { type: Number, default: 0 },

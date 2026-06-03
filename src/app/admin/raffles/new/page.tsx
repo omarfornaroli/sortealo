@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ChevronLeft, Save, Loader2, Upload, Star } from 'lucide-react';
+import { ChevronLeft, Save, Loader2, Upload, Star, Palette } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import Link from 'next/link';
 
@@ -21,6 +21,8 @@ export default function NewRafflePage() {
     maxTickets: 1000,
     drawDate: '',
     isFeatured: false,
+    featuredTitleColor: '#ffffff',
+    featuredSubtitleColor: '#94a3b8',
   });
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -150,16 +152,51 @@ export default function NewRafflePage() {
               />
             </div>
 
-            <div className="flex items-center space-x-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-              <Checkbox 
-                id="isFeatured" 
-                checked={formData.isFeatured} 
-                onCheckedChange={(checked) => setFormData({...formData, isFeatured: !!checked})}
-              />
-              <div className="flex items-center gap-2">
-                <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                <label htmlFor="isFeatured" className="text-sm font-bold text-slate-700">Marcar como SORTEO DESTACADO</label>
+            <div className="space-y-4 p-6 bg-slate-50 rounded-2xl border border-slate-200">
+              <div className="flex items-center space-x-3">
+                <Checkbox 
+                  id="isFeatured" 
+                  checked={formData.isFeatured} 
+                  onCheckedChange={(checked) => setFormData({...formData, isFeatured: !!checked})}
+                />
+                <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                  <label htmlFor="isFeatured" className="text-sm font-bold text-slate-700 uppercase tracking-tighter">Marcar como SORTEO DESTACADO (Hero)</label>
+                </div>
               </div>
+
+              {formData.isFeatured && (
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-1">
+                      <Palette className="w-3 h-3" /> Color Título
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="color" 
+                        value={formData.featuredTitleColor}
+                        onChange={(e) => setFormData({...formData, featuredTitleColor: e.target.value})}
+                        className="w-10 h-10 rounded-lg cursor-pointer border-none"
+                      />
+                      <span className="text-xs font-mono font-bold text-slate-500">{formData.featuredTitleColor}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-1">
+                      <Palette className="w-3 h-3" /> Color Subtítulo
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="color" 
+                        value={formData.featuredSubtitleColor}
+                        onChange={(e) => setFormData({...formData, featuredSubtitleColor: e.target.value})}
+                        className="w-10 h-10 rounded-lg cursor-pointer border-none"
+                      />
+                      <span className="text-xs font-mono font-bold text-slate-500">{formData.featuredSubtitleColor}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

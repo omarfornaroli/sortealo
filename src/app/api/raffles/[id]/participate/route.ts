@@ -6,7 +6,7 @@ import Raffle from '@/models/Raffle';
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   await dbConnect();
   const { id } = params;
-  const { email, name, phone, quantity } = await req.json();
+  const { email, name, dni, phone, quantity } = await req.json();
 
   try {
     const raffle = await Raffle.findById(id);
@@ -33,6 +33,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     raffle.participants.push({
       email: email.toLowerCase(),
       name,
+      dni,
       phone,
       tickets: generatedTickets,
       purchaseDate: new Date()
