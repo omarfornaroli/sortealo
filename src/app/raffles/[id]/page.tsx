@@ -10,19 +10,22 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { ShieldCheck, Ticket, User, Clock, ChevronLeft, CreditCard, Loader2, CheckCircle2 } from 'lucide-react';
-import { useState, useEffect, use } from 'react';
+import { ShieldCheck, Ticket, User, Clock, ChevronLeft, CreditCard, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useState, useEffect, use, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 
-export default function RafflePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+function RaffleContent({ id }: { id: string }) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [raffle, setRaffle] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
   const [success, setSuccess] = useState(false);
   const [myTickets, setMyTickets] = useState<string[]>([]);
   const [formattedDrawDate, setFormattedDrawDate] = useState<string | null>(null);
+  const [isProcessingReturn, setIsProcessingReturn] = useState(false);
   
   const [quantity, setQuantity] = useState(1);
   const [formData, setFormData] = useState({
@@ -39,7 +42,6 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
       .then(data => {
         setRaffle(data);
         setLoading(false);
-        // Formatear fecha solo en cliente para evitar hidratación incorrecta
         if (data.drawDate) {
           setFormattedDrawDate(new Date(data.drawDate).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' }));
         }
@@ -50,53 +52,110 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
       });
   }, [id, toast]);
 
-  const handlePurchase = async (e: React.FormEvent) => {
+  // Manejar retorno de Mercado Pago
+  useEffect(() => {
+    const status = searchParams.get('status');
+    const name = searchParams.get('name');
+    const email = searchParams.get('email');
+    const phone = searchParams.get('phone');
+    const qty = searchParams.get('qty');
+
+    if (status === 'success' && name && email && !success && !isProcessingReturn) {
+      setIsProcessingReturn(true);
+      setFormData({ name, email, phone: phone || '' });
+      
+      // Registrar la participación después del pago exitoso
+      fetch(`/api/raffles/${id}/participate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone: phone || '', quantity: parseInt(qty || '1') }),
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setMyTickets(data.tickets);
+          setSuccess(true);
+          toast({ title: '¡Pago Confirmado!', description: 'Tus números han sido asignados correctamente.' });
+        } else {
+          toast({ title: 'Error en registro', description: data.message, variant: 'destructive' });
+        }
+      })
+      .catch(() => {
+        toast({ title: 'Error crítico', description: 'El pago se realizó pero hubo un error al registrar tus números. Por favor contáctanos.', variant: 'destructive' });
+      })
+      .finally(() => {
+        setIsProcessingReturn(false);
+      });
+    } else if (status === 'failure') {
+      toast({ title: 'Pago Fallido', description: 'No se pudo procesar el pago. Intenta nuevamente.', variant: 'destructive' });
+      router.replace(`/raffles/${id}`);
+    }
+  }, [searchParams, id, success, toast, router, isProcessingReturn]);
+
+  const soldTickets = raffle?.soldTickets || 0;
+  const maxTickets = raffle?.maxTickets || 1;
+  const progress = (soldTickets / maxTickets) * 100;
+  const ticketPrice = raffle?.ticketPrice || 0;
+
+  const getBundlePrice = (qty: number) => {
+    if (qty >= 20) return Math.round(ticketPrice * qty * 0.7);
+    if (qty >= 10) return Math.round(ticketPrice * qty * 0.8);
+    if (qty >= 5) return Math.round(ticketPrice * qty * 0.9);
+    return ticketPrice * qty;
+  };
+
+  const bundles = [
+    { qty: 1, label: "1 Chance", badge: "" },
+    { qty: 5, label: "5 Chances", badge: "10% OFF" },
+    { qty: 10, label: "10 Chances", badge: "20% OFF" },
+    { qty: 20, label: "20 Chances", badge: "30% OFF" },
+  ];
+
+  const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.phone) {
-      toast({ title: 'Atención', description: 'Por favor completa todos tus datos.', variant: 'destructive' });
+      toast({ title: 'Atención', description: 'Por favor completa todos tus datos de contacto.', variant: 'destructive' });
       return;
     }
 
     setPurchasing(true);
-    // Simulación de delay de pasarela de pago
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
     try {
-      const res = await fetch(`/api/raffles/${id}/participate`, {
+      const totalPrice = getBundlePrice(quantity);
+      const res = await fetch('/api/mercadopago/preference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, quantity }),
+        body: JSON.stringify({
+          raffleId: id,
+          raffleName: raffle.name,
+          unitPrice: totalPrice,
+          quantity: 1, // Enviamos como un solo item bundle
+          user: formData
+        }),
       });
 
       const data = await res.json();
-      if (res.ok) {
-        setMyTickets(data.tickets);
-        setSuccess(true);
-        toast({ title: '¡Compra exitosa!', description: 'Tus números han sido asignados.' });
+      if (res.ok && data.init_point) {
+        // Redirigir a Mercado Pago
+        window.location.href = data.init_point;
       } else {
-        toast({ title: 'Error', description: data.message, variant: 'destructive' });
+        throw new Error(data.message || 'Error al generar el pago');
       }
-    } catch (error) {
-      toast({ title: 'Error', description: 'Ocurrió un problema con el pago.', variant: 'destructive' });
-    } finally {
+    } catch (error: any) {
+      toast({ title: 'Error de Pago', description: error.message, variant: 'destructive' });
       setPurchasing(false);
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-primary w-12 h-12" /></div>;
+  if (loading || isProcessingReturn) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="animate-spin text-primary w-12 h-12" />
+        <p className="text-slate-500 font-bold">{isProcessingReturn ? 'Validando tu pago...' : 'Cargando sorteo...'}</p>
+      </div>
+    );
+  }
+
   if (!raffle) return <div className="min-h-screen flex items-center justify-center text-slate-500">Sorteo no encontrado</div>;
-
-  const soldTickets = raffle.soldTickets || 0;
-  const maxTickets = raffle.maxTickets || 1; // Evitar división por cero
-  const progress = (soldTickets / maxTickets) * 100;
-  const ticketPrice = raffle.ticketPrice || 0;
-
-  const bundles = [
-    { qty: 1, label: "1 Chance", price: ticketPrice, badge: "" },
-    { qty: 5, label: "5 Chances", price: Math.round(ticketPrice * 5 * 0.9), badge: "10% OFF" },
-    { qty: 10, label: "10 Chances", price: Math.round(ticketPrice * 10 * 0.8), badge: "20% OFF" },
-    { qty: 20, label: "20 Chances", price: Math.round(ticketPrice * 20 * 0.7), badge: "30% OFF" },
-  ];
 
   if (success) {
     return (
@@ -217,7 +276,7 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
                             </span>
                           )}
                           <div className={`text-xl font-black mb-1 ${quantity === bundle.qty ? 'text-primary' : 'text-slate-900'}`}>{bundle.label}</div>
-                          <div className="text-sm font-bold text-slate-400">${bundle.price.toLocaleString()}</div>
+                          <div className="text-sm font-bold text-slate-400">${getBundlePrice(bundle.qty).toLocaleString()}</div>
                         </button>
                       ))}
                     </div>
@@ -233,7 +292,7 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
                     </div>
                   </div>
 
-                  <form onSubmit={handlePurchase} className="space-y-6 pt-10 border-t border-slate-100">
+                  <form onSubmit={handlePayment} className="space-y-6 pt-10 border-t border-slate-100">
                     <h3 className="text-3xl font-headline font-bold text-slate-900">2. Tus datos de contacto</h3>
                     <div className="space-y-4">
                       <div className="space-y-2">
@@ -275,14 +334,14 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
                       <Button 
                         type="submit"
                         disabled={purchasing}
-                        className="w-full h-20 bg-primary text-white text-2xl font-black rounded-3xl hover:bg-primary/90 shadow-2xl shadow-primary/30 flex items-center justify-center gap-4 transition-all hover:scale-[1.02]"
+                        className="w-full h-20 bg-[#009EE3] text-white text-2xl font-black rounded-3xl hover:bg-[#008AC9] shadow-2xl shadow-blue-500/30 flex items-center justify-center gap-4 transition-all hover:scale-[1.02]"
                       >
                         {purchasing ? <Loader2 className="animate-spin w-8 h-8" /> : <CreditCard className="w-8 h-8" />}
-                        {purchasing ? 'PROCESANDO...' : 'PAGAR CON MERCADO PAGO'}
+                        {purchasing ? 'GENERANDO PAGO...' : 'PAGAR CON MERCADO PAGO'}
                       </Button>
                       <div className="flex items-center justify-center gap-3 mt-6 text-xs text-slate-400 font-bold uppercase tracking-widest">
                         <ShieldCheck className="w-5 h-5 text-green-500" />
-                        Transacción 100% Segura
+                        Transacción Segura via Mercado Pago
                       </div>
                     </div>
                   </form>
@@ -308,5 +367,14 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
 
       <Footer />
     </div>
+  );
+}
+
+export default function RafflePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-primary w-12 h-12" /></div>}>
+      <RaffleContent id={id} />
+    </Suspense>
   );
 }
