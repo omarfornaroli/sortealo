@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ChevronLeft, Save, Loader2, Upload, Image as ImageIcon } from 'lucide-react';
+import { ChevronLeft, Save, Loader2, Upload, Star } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import Link from 'next/link';
 
 export default function NewRafflePage() {
@@ -19,6 +20,7 @@ export default function NewRafflePage() {
     ticketPrice: 500,
     maxTickets: 1000,
     drawDate: '',
+    isFeatured: false,
   });
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -49,7 +51,7 @@ export default function NewRafflePage() {
       if (res.ok) {
         const data = await res.json();
         setFormData(prev => ({ ...prev, imageUrl: data.url }));
-        toast({ title: 'Imagen cargada', description: 'La imagen se subió correctamente a Cloudinary.' });
+        toast({ title: 'Imagen cargada', description: 'La imagen se subió correctamente.' });
       } else {
         throw new Error('Upload failed');
       }
@@ -119,7 +121,7 @@ export default function NewRafflePage() {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Precio Ticket ($)</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Precio por Chance ($)</label>
                 <Input
                   type="number"
                   value={formData.ticketPrice}
@@ -128,7 +130,7 @@ export default function NewRafflePage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Límite Tickets</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Máximo de Tickets</label>
                 <Input
                   type="number"
                   value={formData.maxTickets}
@@ -146,6 +148,18 @@ export default function NewRafflePage() {
                 onChange={(e) => setFormData({...formData, drawDate: e.target.value})}
                 required
               />
+            </div>
+
+            <div className="flex items-center space-x-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <Checkbox 
+                id="isFeatured" 
+                checked={formData.isFeatured} 
+                onCheckedChange={(checked) => setFormData({...formData, isFeatured: !!checked})}
+              />
+              <div className="flex items-center gap-2">
+                <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                <label htmlFor="isFeatured" className="text-sm font-bold text-slate-700">Marcar como SORTEO DESTACADO</label>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -175,11 +189,11 @@ export default function NewRafflePage() {
                 ) : (
                   <label className="cursor-pointer flex flex-col items-center gap-3">
                     <div className="p-4 bg-primary/10 rounded-full text-primary">
-                      {uploading ? <Loader2 className="w-8 h-8 animate-spin" /> : <ImageIcon className="w-8 h-8" />}
+                      {uploading ? <Loader2 className="w-8 h-8 animate-spin" /> : <Upload className="w-8 h-8" />}
                     </div>
                     <div className="text-center">
                       <p className="font-bold text-slate-700">Haz clic para subir</p>
-                      <p className="text-xs text-slate-500">PNG, JPG o WEBP (Máx. 5MB)</p>
+                      <p className="text-xs text-slate-500">PNG, JPG o WEBP</p>
                     </div>
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
                   </label>
