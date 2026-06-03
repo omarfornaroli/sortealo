@@ -16,11 +16,16 @@ export default function LoginPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Si ya hay un token válido en localStorage, intentamos ir al panel
+    // Solo redirigir si el token existe y NO venimos de una redirección fallida desde admin
     const token = localStorage.getItem('adminToken');
-    if (token) {
-      console.log('Token detectado en localStorage, redirigiendo...');
+    const hasRedirectError = sessionStorage.getItem('authError');
+    
+    if (token && !hasRedirectError) {
+      console.log('--- LOGIN: Sesión previa detectada en localStorage. Redirigiendo a /admin ---');
       window.location.replace('/admin');
+    } else if (hasRedirectError) {
+      console.warn('--- LOGIN: Se detectó un error de sesión previo. Manteniendo en login. ---');
+      sessionStorage.removeItem('authError');
     }
   }, []);
 
@@ -28,7 +33,7 @@ export default function LoginPage() {
     e.preventDefault();
     if (loading) return;
     
-    console.log('--- INICIANDO LOGIN ---');
+    console.log('--- LOGIN: Iniciando petición al servidor ---');
     setLoading(true);
     
     try {
@@ -41,23 +46,27 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (res.ok) {
-        console.log('Login exitoso. Guardando token en localStorage...');
+        console.log('--- LOGIN: Respuesta exitosa. Guardando en localStorage ---');
         
-        // Guardar token y sesión en localStorage
+        // Guardar token y sesión en localStorage para persistencia del cliente
         localStorage.setItem('adminToken', data.token);
         localStorage.setItem('userSession', JSON.stringify({
           email: data.user.email,
           loginTime: new Date().toISOString(),
           isAuthenticated: true
         }));
+        
+        // Limpiar errores previos de sesión
+        sessionStorage.removeItem('authError');
 
         toast({ title: 'Bienvenido', description: 'Accediendo al panel administrativo...' });
         
-        // Redirigir usando replace para limpiar el historial de navegación
+        // Redirigir al panel
         setTimeout(() => {
           window.location.replace('/admin');
-        }, 500);
+        }, 300);
       } else {
+        console.error('--- LOGIN: Error de autenticación ---', data.message);
         toast({ 
           title: 'Error de acceso', 
           description: data.message || 'Credenciales inválidas', 
@@ -65,7 +74,7 @@ export default function LoginPage() {
         });
       }
     } catch (error) {
-      console.error('Error de red:', error);
+      console.error('--- LOGIN: Error de red ---', error);
       toast({ 
         title: 'Error', 
         description: 'Error al conectar con el servidor', 

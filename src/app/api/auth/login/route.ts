@@ -7,7 +7,7 @@ import { encrypt } from '@/lib/session';
 import { cookies } from 'next/headers';
 
 export async function POST(req: NextRequest) {
-  console.log('--- API LOGIN: INICIO ---');
+  console.log('--- API LOGIN: Iniciando proceso de autenticación ---');
   try {
     await dbConnect();
     const { email, password } = await req.json();
@@ -19,11 +19,13 @@ export async function POST(req: NextRequest) {
     const user = await User.findOne({ email: email.toLowerCase().trim() });
 
     if (!user || !user.password) {
+      console.warn(`--- API LOGIN: Usuario no encontrado: ${email} ---`);
       return NextResponse.json({ message: 'Credenciales inválidas' }, { status: 401 });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      console.warn(`--- API LOGIN: Contraseña incorrecta para: ${email} ---`);
       return NextResponse.json({ message: 'Credenciales inválidas' }, { status: 401 });
     }
 
@@ -39,7 +41,7 @@ export async function POST(req: NextRequest) {
 
     const sessionToken = await encrypt(userData);
     
-    // 1. Establecer cookie para el Middleware
+    // 1. Establecer cookie para el Middleware (HTTP-Only)
     const cookieStore = await cookies();
     cookieStore.set('session', sessionToken, {
       httpOnly: true,
@@ -49,9 +51,9 @@ export async function POST(req: NextRequest) {
       maxAge: 60 * 60 * 24 * 7, // 1 semana
     });
 
-    console.log('--- API LOGIN: SESIÓN GENERADA ---');
+    console.log(`--- API LOGIN: Sesión exitosa generada para ${email} ---`);
 
-    // 2. Devolver token para localStorage y datos del usuario
+    // 2. Devolver token para localStorage (Cliente)
     return NextResponse.json({ 
       success: true, 
       token: sessionToken,
@@ -60,7 +62,7 @@ export async function POST(req: NextRequest) {
     }, { status: 200 });
 
   } catch (error: any) {
-    console.error('--- ERROR CRITICO API LOGIN ---', error);
+    console.error('--- API LOGIN ERROR CRITICO ---', error);
     return NextResponse.json({ message: 'Error interno del servidor' }, { status: 500 });
   }
 }

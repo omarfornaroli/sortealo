@@ -6,31 +6,36 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const sessionCookie = req.cookies.get('session')?.value;
 
-  console.log(`--- MIDDLEWARE: ${pathname} | Cookie: ${sessionCookie ? 'Presente' : 'Ausente'} ---`);
+  console.log(`--- MIDDLEWARE: Validando acceso a ${pathname} ---`);
 
   // 1. Proteger rutas administrativas
   if (pathname.startsWith('/admin')) {
-    // Si no hay cookie, el servidor redirige. 
-    // Nota: El cliente también verificará localStorage como doble factor.
     if (!sessionCookie) {
-      console.log('Middleware: Sin sesión para /admin. Redirigiendo a login...');
+      console.warn('--- MIDDLEWARE: Sin cookie de sesión en /admin. Redirigiendo... ---');
       return NextResponse.redirect(new URL('/auth/login', req.url));
     }
 
-    const session = await decrypt(sessionCookie);
-    if (!session) {
-      console.log('Middleware: Token inválido. Redirigiendo...');
-      const response = NextResponse.redirect(new URL('/auth/login', req.url));
-      response.cookies.delete('session');
-      return response;
+    try {
+      const session = await decrypt(sessionCookie);
+      if (!session) {
+        console.error('--- MIDDLEWARE: Cookie inválida o malformada ---');
+        const response = NextResponse.redirect(new URL('/auth/login', req.url));
+        response.cookies.delete('session');
+        return response;
+      }
+      console.log('--- MIDDLEWARE: Sesión válida para', session.email, '---');
+    } catch (e) {
+      console.error('--- MIDDLEWARE: Error al desencriptar sesión ---', e);
+      return NextResponse.redirect(new URL('/auth/login', req.url));
     }
   }
 
-  // 2. Redireccionar si ya está logueado
+  // 2. Redireccionar si ya está logueado e intenta ir a login/registro
   if (pathname === '/auth/login' || pathname === '/auth/register') {
     if (sessionCookie) {
       const session = await decrypt(sessionCookie);
       if (session) {
+        console.log('--- MIDDLEWARE: Ya logueado, saltando a /admin ---');
         return NextResponse.redirect(new URL('/admin', req.url));
       }
     }

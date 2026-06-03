@@ -18,26 +18,35 @@ export default function AdminPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
+      console.log('--- ADMIN: Verificando sesión en localStorage ---');
       const token = localStorage.getItem('adminToken');
       const savedSession = localStorage.getItem('userSession');
       
       if (!token || !savedSession) {
-        console.warn('--- ADMIN: No se encontró token en localStorage. Redirigiendo... ---');
+        console.warn('--- ADMIN: No se encontró token o sesión en localStorage. Redirigiendo... ---');
+        // Marcar error para evitar bucle en login
+        sessionStorage.setItem('authError', 'true');
         window.location.replace('/auth/login');
         return;
       }
 
       try {
-        setSession(JSON.parse(savedSession));
+        const parsedSession = JSON.parse(savedSession);
+        setSession(parsedSession);
         
-        // Obtener datos del backend usando el token
-        const res = await fetch('/api/raffles', {
-          headers: { 'Authorization': `Bearer ${token}` }
+        // Obtener datos del backend usando el token de localStorage en el header
+        const res = await fetch('/api/raffles?admin=true', {
+          headers: { 
+            'Authorization': `Bearer ${token}` 
+          }
         });
 
         if (!res.ok) {
           if (res.status === 401) {
+            console.error('--- ADMIN: Token rechazado por el servidor (401) ---');
             localStorage.removeItem('adminToken');
+            localStorage.removeItem('userSession');
+            sessionStorage.setItem('authError', 'true');
             window.location.replace('/auth/login');
             return;
           }
@@ -47,7 +56,7 @@ export default function AdminPage() {
         const data = await res.json();
         setRaffles(data);
 
-        // Calcular stats
+        // Calcular estadísticas
         const totalParticipants = data.reduce((acc: number, curr: any) => acc + (curr.participants?.length || 0), 0);
         setStats({
           totalRaffles: data.length,
@@ -56,7 +65,12 @@ export default function AdminPage() {
           totalParticipants
         });
       } catch (error) {
-        toast({ title: 'Error', description: 'No se pudieron cargar los datos del servidor.', variant: 'destructive' });
+        console.error('--- ADMIN: Error crítico al cargar datos ---', error);
+        toast({ 
+          title: 'Error de conexión', 
+          description: 'No se pudieron cargar los datos del servidor.', 
+          variant: 'destructive' 
+        });
       } finally {
         setLoading(false);
       }
@@ -68,7 +82,6 @@ export default function AdminPage() {
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
     localStorage.removeItem('userSession');
-    // También llamar a la API para limpiar la cookie
     fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
       window.location.replace('/auth/login');
     });
@@ -79,7 +92,7 @@ export default function AdminPage() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center space-y-4">
           <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto" />
-          <p className="text-slate-500 font-medium">Verificando credenciales...</p>
+          <p className="text-slate-500 font-medium">Validando acceso administrativo...</p>
         </div>
       </div>
     );
@@ -113,12 +126,12 @@ export default function AdminPage() {
       <div className="container mx-auto py-12 px-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
           <div>
-            <h1 className="text-5xl font-headline font-bold text-slate-900 tracking-tight">Dashboard</h1>
-            <p className="text-slate-500 mt-2 text-lg font-medium">Gestiona premios, sorteos y revisa el historial.</p>
+            <h1 className="text-5xl font-headline font-bold text-slate-900 tracking-tight">Gestión General</h1>
+            <p className="text-slate-500 mt-2 text-lg font-medium">Control total sobre premios, participantes y sorteos.</p>
           </div>
           <Button asChild className="gap-2 shadow-2xl shadow-primary/30 h-14 px-8 rounded-2xl font-bold text-lg">
             <Link href="/admin/raffles/new">
-              <Plus className="w-6 h-6" /> Crear Sorteo
+              <Plus className="w-6 h-6" /> Nuevo Sorteo
             </Link>
           </Button>
         </div>
@@ -146,22 +159,22 @@ export default function AdminPage() {
 
         <Tabs defaultValue="active" className="space-y-8">
           <TabsList className="bg-white border border-slate-200 p-1.5 rounded-2xl h-16 shadow-sm">
-            <TabsTrigger value="active" className="rounded-xl px-10 font-bold text-base data-[state=active]:bg-primary data-[state=active]:text-white">
+            <TabsTrigger value="active" className="rounded-xl px-10 font-bold text-base data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
               Sorteos Activos
             </TabsTrigger>
-            <TabsTrigger value="history" className="rounded-xl px-10 font-bold text-base data-[state=active]:bg-primary data-[state=active]:text-white">
-              Historial (Finalizados)
+            <TabsTrigger value="history" className="rounded-xl px-10 font-bold text-base data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
+              Historial de Premios
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="active" className="mt-0">
+          <TabsContent value="active" className="mt-0 outline-none">
             {activeRaffles.length === 0 ? (
               <div className="py-24 text-center border-3 border-dashed rounded-[3rem] border-slate-200 bg-white">
                 <TicketIcon className="w-20 h-20 text-slate-100 mx-auto mb-6" />
                 <h3 className="text-2xl font-bold text-slate-900">No hay sorteos vigentes</h3>
-                <p className="text-slate-500 mb-8 max-w-sm mx-auto">Publica un nuevo premio para empezar.</p>
+                <p className="text-slate-500 mb-8 max-w-sm mx-auto">Comienza publicando un nuevo premio para tus usuarios.</p>
                 <Button asChild variant="outline" className="rounded-xl h-12 px-8 font-bold">
-                  <Link href="/admin/raffles/new">Empezar ahora</Link>
+                  <Link href="/admin/raffles/new">Crear Primer Sorteo</Link>
                 </Button>
               </div>
             ) : (
@@ -169,12 +182,12 @@ export default function AdminPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="history" className="mt-0">
+          <TabsContent value="history" className="mt-0 outline-none">
             {finishedRaffles.length === 0 ? (
               <div className="py-24 text-center border-3 border-dashed rounded-[3rem] border-slate-200 bg-white">
                 <Trophy className="w-20 h-20 text-slate-100 mx-auto mb-6" />
-                <h3 className="text-2xl font-bold text-slate-900">Historial vacío</h3>
-                <p className="text-slate-500">Aquí verás los registros de ganadores.</p>
+                <h3 className="text-2xl font-bold text-slate-900">Sin registros históricos</h3>
+                <p className="text-slate-500">Aquí verás los detalles de los ganadores de sorteos pasados.</p>
               </div>
             ) : (
               <AdminRaffleList initialRaffles={finishedRaffles} />
