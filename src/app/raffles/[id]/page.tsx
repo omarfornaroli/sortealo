@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Navbar } from '@/components/layout/Navbar';
@@ -38,10 +39,16 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
       .then(data => {
         setRaffle(data);
         setLoading(false);
-        // Formatear fecha solo en cliente
-        setFormattedDrawDate(new Date(data.drawDate).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' }));
+        // Formatear fecha solo en cliente para evitar hidratación incorrecta
+        if (data.drawDate) {
+          setFormattedDrawDate(new Date(data.drawDate).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' }));
+        }
+      })
+      .catch(() => {
+        toast({ title: 'Error', description: 'No se pudo cargar el sorteo.', variant: 'destructive' });
+        setLoading(false);
       });
-  }, [id]);
+  }, [id, toast]);
 
   const handlePurchase = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +58,7 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
     }
 
     setPurchasing(true);
+    // Simulación de delay de pasarela de pago
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     try {
@@ -76,13 +84,18 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-primary w-12 h-12" /></div>;
+  if (!raffle) return <div className="min-h-screen flex items-center justify-center text-slate-500">Sorteo no encontrado</div>;
 
-  const progress = (raffle.soldTickets / raffle.maxTickets) * 100;
+  const soldTickets = raffle.soldTickets || 0;
+  const maxTickets = raffle.maxTickets || 1; // Evitar división por cero
+  const progress = (soldTickets / maxTickets) * 100;
+  const ticketPrice = raffle.ticketPrice || 0;
+
   const bundles = [
-    { qty: 1, label: "1 Chance", price: raffle.ticketPrice, badge: "" },
-    { qty: 5, label: "5 Chances", price: Math.round(raffle.ticketPrice * 5 * 0.9), badge: "10% OFF" },
-    { qty: 10, label: "10 Chances", price: Math.round(raffle.ticketPrice * 10 * 0.8), badge: "20% OFF" },
-    { qty: 20, label: "20 Chances", price: Math.round(raffle.ticketPrice * 20 * 0.7), badge: "30% OFF" },
+    { qty: 1, label: "1 Chance", price: ticketPrice, badge: "" },
+    { qty: 5, label: "5 Chances", price: Math.round(ticketPrice * 5 * 0.9), badge: "10% OFF" },
+    { qty: 10, label: "10 Chances", price: Math.round(ticketPrice * 10 * 0.8), badge: "20% OFF" },
+    { qty: 20, label: "20 Chances", price: Math.round(ticketPrice * 20 * 0.7), badge: "30% OFF" },
   ];
 
   if (success) {
@@ -130,7 +143,7 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
           <div className="grid lg:grid-cols-2 gap-16">
             <div className="space-y-10">
               <div className="relative aspect-[4/3] rounded-[3rem] overflow-hidden border border-slate-100 shadow-2xl">
-                <Image src={raffle.imageUrl} alt={raffle.name} fill className="object-cover" />
+                {raffle.imageUrl && <Image src={raffle.imageUrl} alt={raffle.name} fill className="object-cover" priority />}
                 <div className="absolute top-8 left-8">
                   <Badge className="bg-primary text-white font-black px-6 py-2 text-sm uppercase rounded-full shadow-lg border-2 border-white/20">
                     Sorteo en Curso
@@ -151,7 +164,7 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
                     </div>
                     <div>
                       <span className="block text-[10px] uppercase text-slate-400 font-black tracking-widest mb-1">Fecha Sorteo</span>
-                      <span className="font-headline font-bold text-lg">{formattedDrawDate || 'Cargando...'}</span>
+                      <span className="font-headline font-bold text-lg">{formattedDrawDate || '...'}</span>
                     </div>
                   </div>
                   <div className="bg-slate-50 border border-slate-100 p-8 rounded-[2.5rem] flex items-center gap-5 transition-transform hover:scale-[1.02]">
@@ -160,7 +173,7 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
                     </div>
                     <div>
                       <span className="block text-[10px] uppercase text-slate-400 font-black tracking-widest mb-1">Precio Chance</span>
-                      <span className="font-headline font-bold text-2xl text-primary">${raffle.ticketPrice}</span>
+                      <span className="font-headline font-bold text-2xl text-primary">${ticketPrice}</span>
                     </div>
                   </div>
                 </div>
@@ -172,8 +185,14 @@ export default function RafflePage({ params }: { params: Promise<{ id: string }>
                   </div>
                   <Progress value={progress} className="h-4 bg-slate-800" />
                   <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-500 pt-2">
-                    <span className="flex items-center gap-2"><User className="w-4 h-4 text-primary" /> {raffle.soldTickets.toLocaleString()} vendidos</span>
-                    <span className="flex items-center gap-2"><Ticket className="w-4 h-4 text-primary" /> {Math.max(0, raffle.maxTickets - raffle.soldTickets).toLocaleString()} restantes</span>
+                    <span className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-primary" /> 
+                      {(soldTickets).toLocaleString()} vendidos
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Ticket className="w-4 h-4 text-primary" /> 
+                      {Math.max(0, (raffle.maxTickets || 0) - soldTickets).toLocaleString()} restantes
+                    </span>
                   </div>
                 </div>
               </div>
