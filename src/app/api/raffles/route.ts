@@ -5,9 +5,9 @@ import Raffle from '@/models/Raffle';
 import { decrypt } from '@/lib/session';
 
 async function checkAuth(req: NextRequest) {
-  // Comprobar Authorization Header (Bearer Token) o Cookie
+  // Ahora solo comprobamos el encabezado Authorization: Bearer <token>
   const authHeader = req.headers.get('Authorization');
-  const token = authHeader ? authHeader.split(' ')[1] : req.cookies.get('session')?.value;
+  const token = authHeader?.split(' ')[1];
   
   if (!token) return null;
   return await decrypt(token);
@@ -16,7 +16,7 @@ async function checkAuth(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const session = await checkAuth(req);
   
-  // Si es para el panel de admin, requiere sesión
+  // Si se pide explícitamente el modo admin, validamos el token
   if (req.nextUrl.searchParams.get('admin') === 'true' && !session) {
     return NextResponse.json({ message: 'No autorizado' }, { status: 401 });
   }

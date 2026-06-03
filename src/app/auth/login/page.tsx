@@ -8,37 +8,25 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { ShieldAlert, LogIn, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const searchParams = useSearchParams();
-  const errorReason = searchParams.get('reason');
 
   useEffect(() => {
-    // Si hay un error de sesión, mostrar un toast informativo
-    if (errorReason === 'session_expired') {
-      toast({ title: 'Sesión expirada', description: 'Por favor, vuelve a ingresar tus datos.', variant: 'destructive' });
-    }
-    
-    // Auto-redirección solo si existe el token y NO venimos de un error de sesión
-    const token = localStorage.getItem('adminToken');
-    if (token && !errorReason) {
-      console.log('--- [LOGIN] Token detectado. Intentando entrada automática a /admin ---');
+    // Si ya hay un token, redirigir al admin
+    if (localStorage.getItem('adminToken')) {
       window.location.replace('/admin');
     }
-  }, [errorReason, toast]);
+  }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
     
-    console.log('--- [LOGIN] Iniciando petición de autenticación ---');
     setLoading(true);
-    
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -49,32 +37,23 @@ function LoginForm() {
       const data = await res.json();
 
       if (res.ok) {
-        console.log('--- [LOGIN] Éxito. Guardando sesión en localStorage ---');
-        
+        // Almacenamiento exclusivo en localStorage
         localStorage.setItem('adminToken', data.token);
-        localStorage.setItem('userSession', JSON.stringify({
-          email: data.user.email,
-          loginTime: new Date().toISOString()
-        }));
+        localStorage.setItem('userSession', JSON.stringify(data.user));
 
-        toast({ title: 'Bienvenido', description: 'Accediendo al panel administrativo...' });
-        
-        // Dar tiempo a que la cookie se asiente
-        setTimeout(() => {
-          window.location.replace('/admin');
-        }, 500);
+        toast({ title: 'Bienvenido', description: 'Accediendo...' });
+        window.location.replace('/admin');
       } else {
         toast({ 
-          title: 'Acceso Denegado', 
-          description: data.message || 'Credenciales incorrectas', 
+          title: 'Error', 
+          description: data.message || 'Credenciales inválidas', 
           variant: 'destructive' 
         });
       }
     } catch (error) {
-      console.error('--- [LOGIN] Error de conexión ---', error);
       toast({ 
         title: 'Error de Red', 
-        description: 'No se pudo conectar con el servidor de autenticación.', 
+        description: 'No se pudo conectar con el servidor.', 
         variant: 'destructive' 
       });
     } finally {
@@ -86,37 +65,35 @@ function LoginForm() {
     <form onSubmit={handleAuth}>
       <CardContent className="space-y-5 px-8">
         <div className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-500" htmlFor="email">Email Administrativo</label>
+          <label className="text-xs font-bold uppercase text-slate-500">Email</label>
           <Input
-            id="email"
             type="email"
-            placeholder="admin@sortealo.com.ar"
+            placeholder="admin@sortealo.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="h-12 bg-slate-50 border-slate-200 rounded-xl focus:bg-white transition-all"
+            className="h-12 bg-slate-50 rounded-xl"
           />
         </div>
         <div className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-500" htmlFor="password">Contraseña</label>
+          <label className="text-xs font-bold uppercase text-slate-500">Contraseña</label>
           <Input
-            id="password"
             type="password"
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="h-12 bg-slate-50 border-slate-200 rounded-xl focus:bg-white transition-all"
+            className="h-12 bg-slate-50 rounded-xl"
           />
         </div>
       </CardContent>
-      <CardFooter className="flex flex-col gap-5 p-8 pt-6">
-        <Button type="submit" className="w-full h-14 font-bold gap-2 text-base rounded-xl shadow-lg shadow-primary/20" disabled={loading}>
-          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogIn className="w-5 h-5" />}
-          {loading ? 'Validando...' : 'Acceder al Panel'}
+      <CardFooter className="flex flex-col gap-5 p-8">
+        <Button type="submit" className="w-full h-14 font-bold rounded-xl" disabled={loading}>
+          {loading ? <Loader2 className="animate-spin" /> : <LogIn />}
+          {loading ? 'Entrando...' : 'Acceder al Panel'}
         </Button>
-        <div className="text-sm text-center text-slate-500 font-medium">
-          ¿No tienes acceso? <Link href="/auth/register" className="text-primary font-bold hover:underline">Solicitar registro</Link>
+        <div className="text-sm text-center">
+          <Link href="/auth/register" className="text-primary font-bold">Solicitar registro</Link>
         </div>
       </CardFooter>
     </form>
@@ -126,17 +103,17 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-slate-50 p-4">
-      <Card className="w-full max-w-md shadow-2xl border-slate-200 bg-white rounded-3xl overflow-hidden">
-        <CardHeader className="space-y-1 pb-8 pt-10 text-center">
+      <Card className="w-full max-w-md shadow-2xl rounded-3xl overflow-hidden bg-white">
+        <CardHeader className="text-center pt-10">
           <div className="flex justify-center mb-6">
             <div className="p-4 bg-primary/10 rounded-2xl">
               <ShieldAlert className="w-10 h-10 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold text-slate-900 font-headline">Panel Administrativo</CardTitle>
-          <p className="text-sm text-slate-500 font-medium">Ingresa para gestionar la plataforma</p>
+          <CardTitle className="text-3xl font-bold font-headline">Panel Admin</CardTitle>
+          <p className="text-slate-500">Ingresa para gestionar Sortealo</p>
         </CardHeader>
-        <Suspense fallback={<CardContent className="p-20 flex justify-center"><Loader2 className="animate-spin" /></CardContent>}>
+        <Suspense fallback={<div className="p-10 text-center">Cargando...</div>}>
           <LoginForm />
         </Suspense>
       </Card>
