@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ChevronLeft, Save, Loader2, Calendar, DollarSign, Ticket, Upload, Image as ImageIcon } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ChevronLeft, Save, Loader2, Calendar, DollarSign, Ticket, Upload, Star } from 'lucide-react';
 import Link from 'next/link';
 
 export default function EditRafflePage({ params }: { params: Promise<{ id: string }> }) {
@@ -18,6 +19,7 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
     description: '',
     imageUrl: '',
     isFinished: false,
+    isFeatured: false,
     ticketPrice: 0,
     maxTickets: 0,
     drawDate: '',
@@ -43,6 +45,7 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
           description: data.description,
           imageUrl: data.imageUrl,
           isFinished: data.isFinished,
+          isFeatured: data.isFeatured || false,
           ticketPrice: data.ticketPrice || 0,
           maxTickets: data.maxTickets || 0,
           drawDate: data.drawDate ? new Date(data.drawDate).toISOString().slice(0, 16) : '',
@@ -140,6 +143,7 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                 required
+                className="h-12 rounded-xl"
               />
             </div>
 
@@ -150,7 +154,7 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
                   <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <Input
                     type="number"
-                    className="pl-9"
+                    className="pl-9 h-12 rounded-xl"
                     value={formData.ticketPrice}
                     onChange={(e) => setFormData({...formData, ticketPrice: Number(e.target.value)})}
                     required
@@ -163,7 +167,7 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
                   <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <Input
                     type="number"
-                    className="pl-9"
+                    className="pl-9 h-12 rounded-xl"
                     value={formData.maxTickets}
                     onChange={(e) => setFormData({...formData, maxTickets: Number(e.target.value)})}
                     required
@@ -178,7 +182,7 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
                   type="datetime-local"
-                  className="pl-9"
+                  className="pl-9 h-12 rounded-xl"
                   value={formData.drawDate}
                   onChange={(e) => setFormData({...formData, drawDate: e.target.value})}
                   required
@@ -186,10 +190,22 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
               </div>
             </div>
 
+            <div className="flex items-center space-x-3 p-4 bg-amber-50 rounded-xl border border-amber-100">
+              <Checkbox 
+                id="isFeatured" 
+                checked={formData.isFeatured} 
+                onCheckedChange={(checked) => setFormData({...formData, isFeatured: !!checked})}
+              />
+              <div className="flex items-center gap-2">
+                <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                <label htmlFor="isFeatured" className="text-sm font-bold text-slate-700">MARCAR COMO SORTEO DESTACADO</label>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Descripción Detallada</label>
               <Textarea
-                className="min-h-[120px]"
+                className="min-h-[120px] rounded-xl"
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
                 required
@@ -213,12 +229,10 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
             </div>
 
             <div className="flex items-center space-x-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-              <input 
-                type="checkbox" 
+              <Checkbox 
                 id="isFinished" 
                 checked={formData.isFinished} 
-                onChange={(e) => setFormData({...formData, isFinished: e.target.checked})}
-                className="w-5 h-5"
+                onCheckedChange={(checked) => setFormData({...formData, isFinished: !!checked})}
               />
               <label htmlFor="isFinished" className="text-sm font-bold text-slate-700">Cerrar sorteo manualmente</label>
             </div>
