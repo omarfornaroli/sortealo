@@ -9,12 +9,18 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+interface Participant {
+  email: string;
+  name: string;
+  tickets: string[];
+}
+
 interface Raffle {
   _id: string;
   name: string;
   description: string;
   imageUrl: string;
-  participants: string[];
+  participants: Participant[];
   isFinished: boolean;
   ticketPrice: number;
   winnerEmail?: string;

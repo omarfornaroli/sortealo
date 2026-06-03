@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Raffle from '@/models/Raffle';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   await dbConnect();
-  const { id } = params;
+  const { id } = await params;
   
   try {
     const body = await req.json();
@@ -35,23 +35,24 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       const ticket = Math.floor(100000 + Math.random() * 900000).toString();
       if (!existingTickets.has(ticket)) {
         generatedTickets.push(ticket);
-        existingTickets.add(ticket); // Evitar duplicados en la misma transacción
+        existingTickets.add(ticket);
       }
     }
 
-    // Importante: Empujar el objeto respetando el esquema IParticipant
-    raffle.participants.push({
+    // Insertar el participante como un objeto que cumpla el esquema IParticipant
+    const newParticipant = {
       email: email.toLowerCase().trim(),
       name: name.trim(),
       dni: dni.toString().trim(),
       phone: phone.trim(),
       tickets: generatedTickets,
       purchaseDate: new Date()
-    });
+    };
 
+    // Usamos el método push de Mongoose sobre el array de subdocumentos
+    raffle.participants.push(newParticipant);
     raffle.soldTickets += quantity;
     
-    // El save() de Mongoose disparará la validación del esquema
     await raffle.save();
 
     return NextResponse.json({ 

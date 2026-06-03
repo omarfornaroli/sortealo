@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Raffle from '@/models/Raffle';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   await dbConnect();
-  const { id } = params;
+  const { id } = await params;
 
   try {
     const raffle = await Raffle.findById(id);
@@ -21,13 +21,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ message: 'Este sorteo ya ha finalizado' }, { status: 400 });
     }
 
-    // Lógica de sorteo aleatorio: elegimos un participante al azar
+    // Lógica de sorteo: elegimos un participante al azar
     const randomIndex = Math.floor(Math.random() * raffle.participants.length);
     const winningParticipant = raffle.participants[randomIndex];
     
-    // Elegimos uno de los tickets del ganador al azar
+    // De los tickets que compró el ganador, elegimos el número ganador al azar
     const winnerTicket = winningParticipant.tickets[Math.floor(Math.random() * winningParticipant.tickets.length)];
 
+    // Marcamos el sorteo como finalizado y guardamos los datos del ganador
     raffle.isFinished = true;
     raffle.winnerEmail = winningParticipant.email;
     raffle.winnerTicket = winnerTicket;
