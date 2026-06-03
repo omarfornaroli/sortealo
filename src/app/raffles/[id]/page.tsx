@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { ShieldCheck, Ticket, User, Clock, ChevronLeft, CreditCard, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Ticket, User, Clock, ChevronLeft, CreditCard, Loader2, CheckCircle2, AlertCircle, FlaskConical } from 'lucide-react';
 import { useState, useEffect, use, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -146,6 +146,35 @@ function RaffleContent({ id }: { id: string }) {
     }
   };
 
+  const handleTestPurchase = async () => {
+    if (!formData.name || !formData.email || !formData.phone) {
+      toast({ title: 'Atención', description: 'Por favor completa tus datos para la prueba.', variant: 'destructive' });
+      return;
+    }
+
+    setPurchasing(true);
+    try {
+      const res = await fetch(`/api/raffles/${id}/participate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, quantity }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setMyTickets(data.tickets);
+        setSuccess(true);
+        toast({ title: 'Prueba Exitosa', description: 'Has "comprado" chances en modo test.' });
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error: any) {
+      toast({ title: 'Error Test', description: error.message, variant: 'destructive' });
+    } finally {
+      setPurchasing(false);
+    }
+  };
+
   if (loading || isProcessingReturn) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
@@ -178,9 +207,14 @@ function RaffleContent({ id }: { id: string }) {
               ))}
             </div>
             <p className="text-sm text-slate-400">Te enviamos una copia de tus números a {formData.email}.</p>
-            <Button asChild className="w-full h-14 rounded-2xl text-lg font-bold">
-              <Link href="/">Volver al Inicio</Link>
-            </Button>
+            <div className="flex flex-col gap-4">
+              <Button asChild className="w-full h-14 rounded-2xl text-lg font-bold">
+                <Link href="/">Volver al Inicio</Link>
+              </Button>
+              <Button variant="ghost" onClick={() => setSuccess(false)} className="text-slate-400">
+                Seguir participando
+              </Button>
+            </div>
           </Card>
         </main>
         <Footer />
@@ -330,7 +364,7 @@ function RaffleContent({ id }: { id: string }) {
                       </div>
                     </div>
 
-                    <div className="pt-8">
+                    <div className="pt-8 space-y-4">
                       <Button 
                         type="submit"
                         disabled={purchasing}
@@ -339,6 +373,19 @@ function RaffleContent({ id }: { id: string }) {
                         {purchasing ? <Loader2 className="animate-spin w-8 h-8" /> : <CreditCard className="w-8 h-8" />}
                         {purchasing ? 'GENERANDO PAGO...' : 'PAGAR CON MERCADO PAGO'}
                       </Button>
+
+                      {/* Botón de Test Temporal */}
+                      <Button 
+                        type="button"
+                        variant="outline"
+                        onClick={handleTestPurchase}
+                        disabled={purchasing}
+                        className="w-full h-14 border-dashed border-primary text-primary hover:bg-primary/5 rounded-2xl font-bold gap-2"
+                      >
+                        {purchasing ? <Loader2 className="animate-spin w-4 h-4" /> : <FlaskConical className="w-5 h-5" />}
+                        TEST: COMPRA DIRECTA (OMITIR PAGO)
+                      </Button>
+
                       <div className="flex items-center justify-center gap-3 mt-6 text-xs text-slate-400 font-bold uppercase tracking-widest">
                         <ShieldCheck className="w-5 h-5 text-green-500" />
                         Transacción Segura via Mercado Pago
