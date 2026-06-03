@@ -12,9 +12,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Mercado Pago access token not configured' }, { status: 500 });
     }
 
-    const protocol = req.headers.get('x-forwarded-proto') || 'http';
-    const host = req.headers.get('host');
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`;
+    // Mercado Pago requiere URLs absolutas y válidas. 
+    // Tal como solicitaste, usamos google.com por ahora para depuración.
+    // Nota: Al usar google.com, el proceso de registro automático de números no se ejecutará
+    // ya que el usuario no regresará a la aplicación.
+    const successUrl = 'https://www.google.com';
+    const failureUrl = 'https://www.google.com';
+    const pendingUrl = 'https://www.google.com';
 
     const preference = new Preference(client);
     
@@ -25,17 +29,18 @@ export async function POST(req: NextRequest) {
             id: raffleId,
             title: `Sorteo: ${raffleName} (${quantity} chances)`,
             quantity: 1,
-            unit_price: unitPrice, // El precio ya viene calculado con descuentos del cliente
+            unit_price: Number(unitPrice),
             currency_id: 'ARS',
           },
         ],
         back_urls: {
-          success: `${baseUrl}/raffles/${raffleId}?status=success&qty=${quantity}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&phone=${encodeURIComponent(user.phone)}`,
-          failure: `${baseUrl}/raffles/${raffleId}?status=failure`,
-          pending: `${baseUrl}/raffles/${raffleId}?status=pending`,
+          success: successUrl,
+          failure: failureUrl,
+          pending: pendingUrl,
         },
-        auto_return: 'all',
+        auto_return: 'approved',
         external_reference: raffleId,
+        notification_url: '', // Opcional: para webhooks en producción
         metadata: {
           raffle_id: raffleId,
           user_name: user.name,
@@ -46,9 +51,17 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    if (!result.init_point) {
+      throw new Error('No init_point returned from Mercado Pago');
+    }
+
     return NextResponse.json({ init_point: result.init_point });
   } catch (error: any) {
     console.error('MP Preference Error:', error);
-    return NextResponse.json({ message: 'Error creating payment preference', error: error.message }, { status: 500 });
+    return NextResponse.json({ 
+      message: 'Error creating payment preference', 
+      error: error.message || 'Unknown error',
+      detail: error.cause || error
+    }, { status: 500 });
   }
 }
