@@ -11,6 +11,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const body = await req.json();
     const { email, name, dni, phone, quantity } = body;
 
+    // 1. Verificar existencia y disponibilidad
     const raffle = await Raffle.findById(id);
     if (!raffle) {
       return NextResponse.json({ message: 'Sorteo no encontrado' }, { status: 404 });
@@ -24,12 +25,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ message: 'No hay suficientes tickets disponibles' }, { status: 400 });
     }
 
-    // Obtener todos los tickets ya vendidos para evitar duplicados en este sorteo
+    // 2. Obtener todos los tickets vendidos para evitar duplicados
     const existingTickets = new Set(
       raffle.participants.flatMap((p: any) => p.tickets)
     );
 
-    // Generar números aleatorios únicos de 6 dígitos
+    // 3. Generar números aleatorios únicos de 6 dígitos
     const generatedTickets: string[] = [];
     while (generatedTickets.length < quantity) {
       const ticket = Math.floor(100000 + Math.random() * 900000).toString();
@@ -39,8 +40,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       }
     }
 
-    // Insertar el participante como un objeto que cumpla el esquema IParticipant
-    const newParticipant = {
+    // 4. Crear el objeto de participación respetando el esquema
+    const participantData = {
       email: email.toLowerCase().trim(),
       name: name.trim(),
       dni: dni.toString().trim(),
@@ -49,11 +50,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       purchaseDate: new Date()
     };
 
-    // Usamos el método push de Mongoose sobre el array de subdocumentos
-    raffle.participants.push(newParticipant);
-    raffle.soldTickets += quantity;
-    
-    await raffle.save();
+    // 5. Actualización Atómica para evitar errores de validación de Mongoose
+    const updatedRaffle = await Raffle.findOneAndUpdate(
+      { _id: id, isFinished: false },
+      { 
+        $push: { participants: participantData },
+        $inc: { soldTickets: quantity }
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedRaffle) {
+      throw new Error('No se pudo actualizar el sorteo. Es posible que haya finalizado justo ahora.');
+    }
 
     return NextResponse.json({ 
       success: true, 

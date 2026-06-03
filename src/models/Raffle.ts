@@ -34,13 +34,13 @@ const ParticipantSchema = new Schema({
   phone: { type: String, required: true },
   tickets: [{ type: String }],
   purchaseDate: { type: Date, default: Date.now }
-});
+}, { _id: false }); // Evitamos IDs innecesarios en subdocumentos para simplicidad
 
 const RaffleSchema: Schema = new Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
   imageUrl: { type: String, required: true },
-  participants: [ParticipantSchema],
+  participants: [ParticipantSchema], // Definido explícitamente como un array de ParticipantSchema
   isFinished: { type: Boolean, default: false },
   isFeatured: { type: Boolean, default: false },
   featuredTitleColor: { type: String, default: '#ffffff' },
