@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ChevronLeft, Save, Loader2, Calendar, DollarSign, Ticket } from 'lucide-react';
+import { ChevronLeft, Save, Loader2, Calendar, DollarSign, Ticket, Upload, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 
 export default function EditRafflePage({ params }: { params: Promise<{ id: string }> }) {
@@ -24,10 +24,17 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      window.location.replace('/auth/login');
+      return;
+    }
+
     fetch(`/api/raffles/${id}`)
       .then(res => res.json())
       .then(data => {
@@ -48,14 +55,46 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
       });
   }, [id, router, toast]);
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formDataUpload = new FormData();
+    formDataUpload.append('file', file);
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formDataUpload,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setFormData(prev => ({ ...prev, imageUrl: data.url }));
+        toast({ title: 'Imagen actualizada', description: 'La nueva imagen se subió correctamente.' });
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      toast({ title: 'Error de carga', description: 'No se pudo subir la imagen.', variant: 'destructive' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     
     try {
+      const token = localStorage.getItem('adminToken');
       const res = await fetch(`/api/raffles/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(formData),
       });
 
@@ -157,13 +196,20 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Imagen del Premio (URL)</label>
-              <Input
-                value={formData.imageUrl}
-                onChange={(e) => setFormData({...formData, imageUrl: e.target.value})}
-                required
-              />
+            <div className="space-y-4">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Imagen del Premio</label>
+              <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl p-6 bg-slate-50 transition-colors hover:bg-slate-100 relative group">
+                <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-md">
+                  <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <label className="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-lg font-bold flex items-center gap-2">
+                      {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} 
+                      Cambiar Imagen
+                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center space-x-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
@@ -177,7 +223,7 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
               <label htmlFor="isFinished" className="text-sm font-bold text-slate-700">Cerrar sorteo manualmente</label>
             </div>
 
-            <Button type="submit" className="w-full h-14 text-lg font-bold rounded-xl shadow-lg" disabled={saving}>
+            <Button type="submit" className="w-full h-14 text-lg font-bold rounded-xl shadow-lg" disabled={saving || uploading}>
               {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
               {saving ? 'Guardando...' : 'Guardar Cambios'}
             </Button>
