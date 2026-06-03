@@ -14,11 +14,14 @@ export default async function HomePage() {
     
     // Serializamos para evitar problemas con objetos de MongoDB
     const serializedRaffles = JSON.parse(JSON.stringify(raffles));
+    
+    // Buscamos específicamente el primero que sea destacado, o el más reciente si no hay destacados
+    const featuredRaffle = serializedRaffles.find((r: any) => r.isFeatured) || serializedRaffles[0];
 
     return (
       <div className="min-h-screen flex flex-col bg-white">
         <Navbar />
-        <Hero />
+        <Hero featuredRaffle={featuredRaffle} />
         
         <main id="raffles" className="flex-1 py-24">
           <div className="container mx-auto px-4">
