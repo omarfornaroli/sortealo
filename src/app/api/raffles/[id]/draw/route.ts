@@ -13,22 +13,29 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ message: 'Sorteo no encontrado' }, { status: 404 });
     }
 
-    if (!raffle.participants || raffle.participants.length === 0) {
-      return NextResponse.json({ message: 'No hay participantes para este sorteo' }, { status: 400 });
+    // Validación robusta de participantes
+    const participants = raffle.participants || [];
+    if (participants.length === 0) {
+      return NextResponse.json({ message: 'No hay participantes registrados para realizar el sorteo.' }, { status: 400 });
     }
 
     if (raffle.isFinished) {
-      return NextResponse.json({ message: 'Este sorteo ya ha finalizado' }, { status: 400 });
+      return NextResponse.json({ message: 'Este sorteo ya ha sido finalizado previamente.' }, { status: 400 });
     }
 
     // Lógica de sorteo: elegimos un participante al azar
-    const randomIndex = Math.floor(Math.random() * raffle.participants.length);
-    const winningParticipant = raffle.participants[randomIndex];
+    const randomIndex = Math.floor(Math.random() * participants.length);
+    const winningParticipant = participants[randomIndex];
     
-    // De los tickets que compró el ganador, elegimos el número ganador al azar
-    const winnerTicket = winningParticipant.tickets[Math.floor(Math.random() * winningParticipant.tickets.length)];
+    // Elegimos un número ganador al azar de los tickets que posee el ganador
+    const winnerTickets = winningParticipant.tickets || [];
+    if (winnerTickets.length === 0) {
+        return NextResponse.json({ message: 'El participante seleccionado no tiene tickets válidos.' }, { status: 500 });
+    }
+    
+    const winnerTicket = winnerTickets[Math.floor(Math.random() * winnerTickets.length)];
 
-    // Marcamos el sorteo como finalizado y guardamos los datos del ganador
+    // Actualizamos el sorteo
     raffle.isFinished = true;
     raffle.winnerEmail = winningParticipant.email;
     raffle.winnerTicket = winnerTicket;
@@ -36,6 +43,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     await raffle.save();
 
     return NextResponse.json({ 
+      success: true,
       message: '¡Sorteo ejecutado con éxito!',
       winnerEmail: winningParticipant.email,
       winnerName: winningParticipant.name,
@@ -45,7 +53,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   } catch (error: any) {
     console.error('Error al ejecutar el sorteo:', error);
     return NextResponse.json({ 
-      message: 'Error al ejecutar el sorteo', 
+      message: 'Error interno al ejecutar el sorteo', 
       error: error.message 
     }, { status: 500 });
   }
