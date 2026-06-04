@@ -5,7 +5,6 @@ import Raffle from '@/models/Raffle';
 import { decrypt } from '@/lib/session';
 
 async function checkAuth(req: NextRequest) {
-  // Ahora solo comprobamos el encabezado Authorization: Bearer <token>
   const authHeader = req.headers.get('Authorization');
   const token = authHeader?.split(' ')[1];
   
@@ -15,17 +14,21 @@ async function checkAuth(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   const session = await checkAuth(req);
+  const isAdminRequest = req.nextUrl.searchParams.get('admin') === 'true';
   
-  // Si se pide explícitamente el modo admin, validamos el token
-  if (req.nextUrl.searchParams.get('admin') === 'true' && !session) {
+  if (isAdminRequest && !session) {
     return NextResponse.json({ message: 'No autorizado' }, { status: 401 });
   }
 
   await dbConnect();
   try {
-    const raffles = await Raffle.find({}).sort({ createdAt: -1 });
+    // Si es admin, traemos todos los campos incluyendo participantes. Si no, podemos filtrar para ahorrar ancho de banda.
+    const query = Raffle.find({}).sort({ createdAt: -1 });
+    const raffles = await query.lean();
+    
     return NextResponse.json(raffles, { status: 200 });
   } catch (error) {
+    console.error('API GET Raffles Error:', error);
     return NextResponse.json({ message: 'Error fetching raffles', error }, { status: 500 });
   }
 }

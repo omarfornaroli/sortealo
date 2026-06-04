@@ -3,12 +3,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Raffle from '@/models/Raffle';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   await dbConnect();
-  const { id } = params;
+  const { id } = await params;
 
   try {
-    const raffle = await Raffle.findById(id);
+    // Aseguramos que se devuelva el objeto completo sin exclusiones
+    const raffle = await Raffle.findById(id).lean();
     if (!raffle) {
       return NextResponse.json({ message: 'Raffle not found' }, { status: 404 });
     }
@@ -18,9 +19,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   await dbConnect();
-  const { id } = params;
+  const { id } = await params;
   const data = await req.json();
 
   try {
@@ -38,9 +39,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   await dbConnect();
-  const { id } = params;
+  const { id } = await params;
 
   try {
     const deletedRaffle = await Raffle.findByIdAndDelete(id);
