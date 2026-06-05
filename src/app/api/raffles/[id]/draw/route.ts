@@ -8,18 +8,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { id } = await params;
 
   try {
-    const raffle = await Raffle.findById(id);
-    if (!raffle) {
+    // Usamos .lean() para obtener los datos crudos y evitar problemas con subdocumentos en Mongoose
+    const raffleData = await Raffle.findById(id).lean();
+    
+    if (!raffleData) {
       return NextResponse.json({ message: 'Sorteo no encontrado' }, { status: 404 });
     }
 
-    // Validación robusta de participantes
-    const participants = raffle.participants || [];
+    const participants = raffleData.participants || [];
+    
     if (participants.length === 0) {
+      console.log('Intento de sorteo fallido: No hay participantes en la base de datos para el ID:', id);
       return NextResponse.json({ message: 'No hay participantes registrados para realizar el sorteo.' }, { status: 400 });
     }
 
-    if (raffle.isFinished) {
+    if (raffleData.isFinished) {
       return NextResponse.json({ message: 'Este sorteo ya ha sido finalizado previamente.' }, { status: 400 });
     }
 
@@ -35,12 +38,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     
     const winnerTicket = winnerTickets[Math.floor(Math.random() * winnerTickets.length)];
 
-    // Actualizamos el sorteo
-    raffle.isFinished = true;
-    raffle.winnerEmail = winningParticipant.email;
-    raffle.winnerTicket = winnerTicket;
-    
-    await raffle.save();
+    // Actualizamos el sorteo usando findByIdAndUpdate para mayor seguridad
+    await Raffle.findByIdAndUpdate(id, {
+      isFinished: true,
+      winnerEmail: winningParticipant.email,
+      winnerTicket: winnerTicket
+    });
 
     return NextResponse.json({ 
       success: true,
