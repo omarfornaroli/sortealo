@@ -2,22 +2,21 @@
 "use client";
 
 import { useState, useEffect, use } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { 
   ChevronLeft, 
   Mail, 
   User, 
   Phone, 
-  Ticket, 
   Search, 
   Loader2, 
   Calendar, 
   Fingerprint, 
   RefreshCcw, 
   Download,
-  Users,
-  ExternalLink
+  Users
 } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -58,19 +57,22 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
   ) || [];
 
   const handleExportCSV = () => {
-    if (!raffle?.participants?.length) return;
+    if (!raffle?.participants?.length) {
+      toast({ title: "Sin datos", description: "No hay participantes para exportar.", variant: "destructive" });
+      return;
+    }
     
     const headers = ["Nombre", "Email", "DNI", "Telefono", "Tickets", "Fecha Compra"];
     const rows = raffle.participants.map((p: any) => [
-      p.name,
-      p.email,
-      p.dni,
-      p.phone,
-      p.tickets.join('|'),
-      new Date(p.purchaseDate).toLocaleDateString()
+      `"${p.name}"`,
+      `"${p.email}"`,
+      `"${p.dni}"`,
+      `"${p.phone}"`,
+      `"${p.tickets?.join(' | ') || ''}"`,
+      `"${p.purchaseDate ? new Date(p.purchaseDate).toLocaleDateString() : ''}"`
     ]);
 
-    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    const csvContent = "\uFEFF" + [headers, ...rows].map(e => e.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -87,7 +89,7 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-4">
       <Loader2 className="animate-spin text-primary w-12 h-12" />
-      <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Cargando base de datos...</p>
+      <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Cargando registro de compradores...</p>
     </div>
   );
 
@@ -116,20 +118,16 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
             Detalle de Participación
           </Badge>
           <h1 className="text-5xl font-headline font-bold text-slate-900 mb-2">{raffle.name}</h1>
-          <p className="text-slate-500 font-medium text-lg">Control de asignación y verificación de números.</p>
+          <p className="text-slate-500 font-medium text-lg">Registro inmutable de números y compradores.</p>
           
           <div className="flex flex-wrap gap-6 mt-10">
             <div className="bg-primary/5 px-8 py-5 rounded-[2rem] border border-primary/10 shadow-sm min-w-[200px]">
-              <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">Chances Vendidas</p>
+              <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">Total Tickets</p>
               <p className="font-black text-slate-900 text-4xl">{raffle.soldTickets}</p>
             </div>
             <div className="bg-slate-50 px-8 py-5 rounded-[2rem] border border-slate-100 shadow-sm min-w-[200px]">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Compradores Únicos</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Compradores</p>
               <p className="font-black text-slate-900 text-4xl">{raffle.participants?.length || 0}</p>
-            </div>
-            <div className="bg-slate-50 px-8 py-5 rounded-[2rem] border border-slate-100 shadow-sm min-w-[200px]">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Disponibilidad</p>
-              <p className="font-black text-slate-900 text-4xl">{Math.max(0, raffle.maxTickets - raffle.soldTickets)}</p>
             </div>
           </div>
         </div>
@@ -139,7 +137,7 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
         <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 w-6 h-6" />
         <Input 
           className="pl-16 h-16 bg-white rounded-[1.5rem] border-slate-200 text-lg shadow-sm focus:shadow-xl focus:ring-primary/20 transition-all" 
-          placeholder="Buscar por Nombre, Email, DNI o WhatsApp..."
+          placeholder="Filtrar por Nombre, Email, DNI o WhatsApp..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -163,7 +161,7 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
                   <td colSpan={5} className="px-10 py-24 text-center">
                     <div className="max-w-xs mx-auto space-y-3">
                       <Search className="w-12 h-12 text-slate-200 mx-auto" />
-                      <p className="text-slate-400 font-bold italic">No se encontraron participantes.</p>
+                      <p className="text-slate-400 font-bold italic">No se encontraron registros para tu búsqueda.</p>
                     </div>
                   </td>
                 </tr>
@@ -226,7 +224,7 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
       <div className="mt-12 p-8 bg-slate-900 rounded-[3rem] text-center space-y-4">
         <h4 className="text-white font-headline text-2xl font-bold">Auditoría y Transparencia</h4>
         <p className="text-slate-400 text-sm max-w-2xl mx-auto">
-          Esta lista contiene todos los registros inmutables de participación. Cada número asignado es único y está vinculado permanentemente a la identidad del comprador.
+          Este registro es inmutable. Cada número asignado está vinculado permanentemente a la identidad y contacto del comprador para garantizar un proceso justo.
         </p>
       </div>
     </div>

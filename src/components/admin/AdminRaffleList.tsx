@@ -4,10 +4,9 @@
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Users, Ticket as TicketIcon, Loader2, Trophy, ExternalLink, Calendar, CheckCircle, ArrowRight } from 'lucide-react';
+import { Edit, Trash2, Users, Ticket as TicketIcon, Loader2, Trophy, ArrowRight, Calendar, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 interface Participant {
   email: string;
@@ -33,7 +32,6 @@ export function AdminRaffleList({ initialRaffles }: { initialRaffles: Raffle[] }
   const [raffles, setRaffles] = useState(initialRaffles);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const { toast } = useToast();
-  const router = useRouter();
 
   const handleDelete = async (id: string) => {
     if (!confirm('¿Seguro que quieres eliminar este sorteo? Se perderán todos los datos de participantes.')) return;
@@ -91,7 +89,7 @@ export function AdminRaffleList({ initialRaffles }: { initialRaffles: Raffle[] }
           <CardContent className="p-8 pt-0 space-y-6 flex-1">
             <div className="grid grid-cols-2 gap-4">
               <Link href={`/admin/raffles/participants/${raffle._id}`} className="block group/stat">
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 hover:border-primary/40 hover:bg-white transition-all">
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 hover:border-primary/40 hover:bg-white transition-all h-full">
                   <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
                     <Users className="w-3.5 h-3.5 text-primary" /> Participantes
                   </div>
@@ -113,30 +111,34 @@ export function AdminRaffleList({ initialRaffles }: { initialRaffles: Raffle[] }
               <div className="p-5 bg-amber-50 rounded-[1.5rem] border border-amber-200 animate-in zoom-in-95 duration-300">
                 <div className="flex items-center gap-2 mb-2">
                   <Trophy className="w-4 h-4 text-amber-600" />
-                  <span className="text-xs font-black text-amber-800 uppercase tracking-widest">Premio Entregado</span>
+                  <span className="text-xs font-black text-amber-800 uppercase tracking-widest">Ganador</span>
                 </div>
                 <p className="text-sm font-bold text-slate-900 truncate">{raffle.winnerEmail}</p>
                 <div className="flex items-center gap-2 mt-2">
-                   <span className="text-[10px] font-black text-slate-400 uppercase">Nro Ganador:</span>
+                   <span className="text-[10px] font-black text-slate-400 uppercase">Ticket:</span>
                    <span className="bg-white px-2 py-0.5 rounded-lg border border-amber-200 text-amber-700 font-mono font-black text-xs">{raffle.winnerTicket}</span>
                 </div>
               </div>
             )}
             
             <div className="flex flex-col gap-3 pt-4 border-t border-slate-50">
-              {!raffle.isFinished ? (
-                <Button asChild className="w-full h-14 gap-3 rounded-2xl font-black text-lg bg-primary shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+              <Button asChild className="w-full h-14 gap-3 rounded-2xl font-black text-lg bg-primary shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                {raffle.isFinished ? (
+                   <Link href={`/admin/raffles/draw/${raffle._id}`}>
+                    <Trophy className="w-5 h-5" /> VER RESULTADO
+                  </Link>
+                ) : (
                   <Link href={`/admin/raffles/draw/${raffle._id}`}>
                     <Trophy className="w-5 h-5" /> EJECUTAR SORTEO
                   </Link>
-                </Button>
-              ) : (
-                <Button asChild variant="outline" className="w-full h-14 gap-3 rounded-2xl font-black text-lg border-2 border-slate-200 text-slate-600 hover:bg-slate-50">
-                  <Link href={`/admin/raffles/draw/${raffle._id}`}>
-                    <Trophy className="w-5 h-5" /> DETALLES GANADOR
-                  </Link>
-                </Button>
-              )}
+                )}
+              </Button>
+
+              <Button asChild variant="outline" className="w-full h-12 gap-3 rounded-xl font-bold border-slate-200 text-slate-500 hover:text-primary hover:bg-slate-50">
+                <Link href={`/admin/raffles/participants/${raffle._id}`}>
+                  <Search className="w-4 h-4" /> VER REGISTRO DE COMPRADORES
+                </Link>
+              </Button>
               
               <div className="flex gap-3">
                 <Button asChild variant="ghost" className="flex-1 h-12 gap-2 border border-slate-100 rounded-xl hover:bg-slate-50 font-black uppercase text-xs tracking-widest text-slate-500 hover:text-primary">
