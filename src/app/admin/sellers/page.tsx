@@ -17,7 +17,7 @@ import {
   Trash2, 
   Search,
   ExternalLink,
-  Select as SelectIcon
+  MousePointerClick as SelectIcon
 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
