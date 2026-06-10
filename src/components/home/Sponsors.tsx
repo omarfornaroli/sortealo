@@ -15,7 +15,7 @@ export function Sponsors({ sponsors = [] }: SponsorsProps) {
   const marqueeItems = [...sponsors, ...sponsors, ...sponsors, ...sponsors];
 
   return (
-    <section className="py-20 bg-white border-y border-slate-100 overflow-hidden">
+    <section className="pt-20 pb-4 bg-white border-y border-slate-100 overflow-hidden">
       <div className="container mx-auto px-4 mb-12">
         <p className="text-center text-[14px] font-black text-slate-400 uppercase tracking-[0.4em]">
           Nuestros Sponsors
@@ -29,12 +29,12 @@ export function Sponsors({ sponsors = [] }: SponsorsProps) {
             if (!url) return null;
             return (
               <div key={index} className="mx-16 md:mx-24 flex items-center justify-center shrink-0">
-                <div className="relative h-[144px] w-[384px] md:h-[168px] md:w-[528px] group grayscale hover:grayscale-0 transition-all duration-500 opacity-60 hover:opacity-100">
+                <div className="relative h-[144px] w-[384px] md:h-[168px] md:w-[528px] group transition-all duration-500">
                   <Image 
                     src={url} 
                     alt={`Sponsor ${index}`} 
                     fill 
-                    className="object-contain filter"
+                    className="object-contain"
                     sizes="(max-width: 768px) 384px, 528px"
                   />
                 </div>
@@ -49,12 +49,12 @@ export function Sponsors({ sponsors = [] }: SponsorsProps) {
             if (!url) return null;
             return (
               <div key={`dup-${index}`} className="mx-16 md:mx-24 flex items-center justify-center shrink-0">
-                <div className="relative h-[144px] w-[384px] md:h-[168px] md:w-[528px] group grayscale hover:grayscale-0 transition-all duration-500 opacity-60 hover:opacity-100">
+                <div className="relative h-[144px] w-[384px] md:h-[168px] md:w-[528px] group transition-all duration-500">
                   <Image 
                     src={url} 
                     alt={`Sponsor Duplicate ${index}`} 
                     fill 
-                    className="object-contain filter"
+                    className="object-contain"
                     sizes="(max-width: 768px) 384px, 528px"
                   />
                 </div>

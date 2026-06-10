@@ -40,7 +40,7 @@ export default async function HomePage() {
         {/* Sección de sponsors con datos garantizados */}
         <Sponsors sponsors={serializedSettings.sponsors} />
         
-        <main id="raffles" className="flex-1 py-24">
+        <main id="raffles" className="flex-1 pt-12 pb-24">
           <div className="container mx-auto px-4">
             <div className="text-center mb-20 space-y-6">
               <div className="inline-block px-6 py-2 bg-primary/10 rounded-full text-primary font-black text-xs uppercase tracking-widest border border-primary/20">
