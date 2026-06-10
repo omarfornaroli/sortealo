@@ -12,18 +12,22 @@ interface HeroProps {
 }
 
 export function Hero({ featuredRaffle }: HeroProps) {
+  // Use the custom background if available, otherwise fallback to a default luxury image
+  const bgImage = featuredRaffle?.featuredBackgroundImageUrl || "https://picsum.photos/seed/luxury-prizes-montage/1920/1080";
+
   return (
     <section className="relative min-h-[95vh] flex items-center pt-20 overflow-hidden bg-slate-950">
       <div className="absolute inset-0 z-0">
         <Image 
-          src="https://picsum.photos/seed/luxury-prizes-montage/1920/1080" 
-          alt="Premios Exclusivos" 
+          src={bgImage} 
+          alt="Fondo de Premios" 
           fill 
-          className="object-cover opacity-40 brightness-50"
+          className="object-cover opacity-50 brightness-50"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-transparent to-transparent" />
+        {/* Gradients to ensure text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/40 to-transparent" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10 grid lg:grid-cols-2 gap-12 items-center">
@@ -49,14 +53,16 @@ export function Hero({ featuredRaffle }: HeroProps) {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-5 pt-4">
-            <Button asChild size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 h-16 px-10 text-lg font-black rounded-2xl group shadow-2xl shadow-primary/40">
-              <Link href="#raffles">
+            <Button asChild className="h-16 px-10 text-lg font-black rounded-2xl group shadow-2xl shadow-primary/40 bg-primary text-primary-foreground hover:bg-primary/90 transition-all">
+              <Link href="#raffles" className="flex items-center gap-2">
                 EMPEZAR A GANAR
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="h-16 px-10 text-lg font-bold border-white/20 text-white hover:bg-white/10 rounded-2xl backdrop-blur-md">
-              Ver Ganadores
+            <Button asChild variant="outline" className="h-16 px-10 text-lg font-bold border-white/30 text-white hover:bg-white/10 rounded-2xl backdrop-blur-md transition-all">
+              <Link href="/winners">
+                Ver Ganadores
+              </Link>
             </Button>
           </div>
 

@@ -21,6 +21,7 @@ export interface IRaffle extends Document {
   isFeatured: boolean;
   featuredTitleColor?: string;
   featuredSubtitleColor?: string;
+  featuredBackgroundImageUrl?: string;
   ticketPrice: number;
   maxTickets: number;
   soldTickets: number;
@@ -49,6 +50,7 @@ const RaffleSchema: Schema = new Schema({
   isFeatured: { type: Boolean, default: false },
   featuredTitleColor: { type: String, default: '#ffffff' },
   featuredSubtitleColor: { type: String, default: '#94a3b8' },
+  featuredBackgroundImageUrl: { type: String },
   ticketPrice: { type: Number, default: 0 },
   maxTickets: { type: Number, default: 0 },
   soldTickets: { type: Number, default: 0 },

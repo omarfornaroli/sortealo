@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ChevronLeft, Save, Loader2, Upload, Star, Palette } from 'lucide-react';
+import { ChevronLeft, Save, Loader2, Upload, Star, Palette, Image as ImageIcon } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import Link from 'next/link';
 
@@ -23,9 +23,10 @@ export default function NewRafflePage() {
     isFeatured: false,
     featuredTitleColor: '#ffffff',
     featuredSubtitleColor: '#94a3b8',
+    featuredBackgroundImageUrl: '',
   });
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState<string | null>(null);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -36,11 +37,11 @@ export default function NewRafflePage() {
     }
   }, []);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'imageUrl' | 'featuredBackgroundImageUrl') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploading(true);
+    setUploading(field);
     const formDataUpload = new FormData();
     formDataUpload.append('file', file);
 
@@ -52,7 +53,7 @@ export default function NewRafflePage() {
 
       if (res.ok) {
         const data = await res.json();
-        setFormData(prev => ({ ...prev, imageUrl: data.url }));
+        setFormData(prev => ({ ...prev, [field]: data.url }));
         toast({ title: 'Imagen cargada', description: 'La imagen se subió correctamente.' });
       } else {
         throw new Error('Upload failed');
@@ -60,7 +61,7 @@ export default function NewRafflePage() {
     } catch (error) {
       toast({ title: 'Error de carga', description: 'No se pudo subir la imagen.', variant: 'destructive' });
     } finally {
-      setUploading(false);
+      setUploading(null);
     }
   };
 
@@ -166,33 +167,62 @@ export default function NewRafflePage() {
               </div>
 
               {formData.isFeatured && (
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-1">
-                      <Palette className="w-3 h-3" /> Color Título
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input 
-                        type="color" 
-                        value={formData.featuredTitleColor}
-                        onChange={(e) => setFormData({...formData, featuredTitleColor: e.target.value})}
-                        className="w-10 h-10 rounded-lg cursor-pointer border-none"
-                      />
-                      <span className="text-xs font-mono font-bold text-slate-500">{formData.featuredTitleColor}</span>
+                <div className="space-y-6 pt-4 border-t border-slate-200">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-1">
+                        <Palette className="w-3 h-3" /> Color Título
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input 
+                          type="color" 
+                          value={formData.featuredTitleColor}
+                          onChange={(e) => setFormData({...formData, featuredTitleColor: e.target.value})}
+                          className="w-10 h-10 rounded-lg cursor-pointer border-none"
+                        />
+                        <span className="text-xs font-mono font-bold text-slate-500">{formData.featuredTitleColor}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-1">
+                        <Palette className="w-3 h-3" /> Color Subtítulo
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input 
+                          type="color" 
+                          value={formData.featuredSubtitleColor}
+                          onChange={(e) => setFormData({...formData, featuredSubtitleColor: e.target.value})}
+                          className="w-10 h-10 rounded-lg cursor-pointer border-none"
+                        />
+                        <span className="text-xs font-mono font-bold text-slate-500">{formData.featuredSubtitleColor}</span>
+                      </div>
                     </div>
                   </div>
+
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-1">
-                      <Palette className="w-3 h-3" /> Color Subtítulo
+                      <ImageIcon className="w-3 h-3" /> Imagen de Fondo del Hero
                     </label>
-                    <div className="flex items-center gap-2">
-                      <input 
-                        type="color" 
-                        value={formData.featuredSubtitleColor}
-                        onChange={(e) => setFormData({...formData, featuredSubtitleColor: e.target.value})}
-                        className="w-10 h-10 rounded-lg cursor-pointer border-none"
-                      />
-                      <span className="text-xs font-mono font-bold text-slate-500">{formData.featuredSubtitleColor}</span>
+                    <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-4 bg-white transition-colors hover:bg-slate-50 relative group">
+                      {formData.featuredBackgroundImageUrl ? (
+                        <div className="relative w-full aspect-[21/9] rounded-lg overflow-hidden shadow-sm">
+                          <img src={formData.featuredBackgroundImageUrl} alt="Hero BG Preview" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <label className="cursor-pointer bg-white text-slate-900 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2">
+                              <Upload className="w-3 h-3" /> Cambiar Fondo
+                              <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'featuredBackgroundImageUrl')} />
+                            </label>
+                          </div>
+                        </div>
+                      ) : (
+                        <label className="cursor-pointer flex flex-col items-center gap-2">
+                          <div className="p-3 bg-primary/5 rounded-full text-primary">
+                            {uploading === 'featuredBackgroundImageUrl' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                          </div>
+                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Subir fondo para el Hero</p>
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'featuredBackgroundImageUrl')} disabled={!!uploading} />
+                        </label>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -219,26 +249,26 @@ export default function NewRafflePage() {
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <label className="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-lg font-bold flex items-center gap-2">
                         <Upload className="w-4 h-4" /> Cambiar Imagen
-                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'imageUrl')} />
                       </label>
                     </div>
                   </div>
                 ) : (
                   <label className="cursor-pointer flex flex-col items-center gap-3">
                     <div className="p-4 bg-primary/10 rounded-full text-primary">
-                      {uploading ? <Loader2 className="w-8 h-8 animate-spin" /> : <Upload className="w-8 h-8" />}
+                      {uploading === 'imageUrl' ? <Loader2 className="w-8 h-8 animate-spin" /> : <Upload className="w-8 h-8" />}
                     </div>
                     <div className="text-center">
                       <p className="font-bold text-slate-700">Haz clic para subir</p>
                       <p className="text-xs text-slate-500">PNG, JPG o WEBP</p>
                     </div>
-                    <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'imageUrl')} disabled={!!uploading} />
                   </label>
                 )}
               </div>
             </div>
 
-            <Button type="submit" className="w-full h-14 text-lg font-bold rounded-xl shadow-lg" disabled={loading || uploading}>
+            <Button type="submit" className="w-full h-14 text-lg font-bold rounded-xl shadow-lg" disabled={loading || !!uploading}>
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
               {loading ? 'Publicando...' : 'Publicar Sorteo'}
             </Button>
