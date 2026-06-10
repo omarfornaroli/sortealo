@@ -21,7 +21,7 @@ export default function SiteSettingsPage() {
     fetch('/api/settings')
       .then(res => res.json())
       .then(data => {
-        setHeroImage(data.heroBackgroundImageUrl);
+        setHeroImage(data.heroBackgroundImageUrl || '');
         setSponsors(data.sponsors || []);
         setLoading(false);
       })
@@ -48,7 +48,7 @@ export default function SiteSettingsPage() {
       if (res.ok) {
         const data = await res.json();
         setHeroImage(data.url);
-        toast({ title: 'Imagen cargada', description: 'El fondo del sitio ha sido actualizado temporalmente.' });
+        toast({ title: 'Imagen cargada', description: 'El fondo del sitio ha sido actualizado. Recuerda guardar cambios.' });
       } else {
         throw new Error('Upload failed');
       }
@@ -76,7 +76,7 @@ export default function SiteSettingsPage() {
       if (res.ok) {
         const data = await res.json();
         setSponsors(prev => [...prev, data.url]);
-        toast({ title: 'Sponsor añadido', description: 'El logo se ha cargado correctamente.' });
+        toast({ title: 'Sponsor añadido', description: 'El logo se ha cargado. Recuerda guardar para persistir los cambios.' });
       } else {
         throw new Error('Upload failed');
       }
@@ -110,12 +110,21 @@ export default function SiteSettingsPage() {
       });
 
       if (res.ok) {
-        toast({ title: 'Ajustes guardados', description: 'La configuración del sitio se actualizó correctamente.' });
+        const updatedData = await res.json();
+        // Sincronizamos el estado con lo que devolvió el servidor
+        setHeroImage(updatedData.heroBackgroundImageUrl);
+        setSponsors(updatedData.sponsors || []);
+        
+        toast({ 
+          title: '¡Ajustes guardados!', 
+          description: 'La configuración global y los patrocinadores se actualizaron con éxito.' 
+        });
       } else {
-        throw new Error('Error al guardar');
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Error al guardar');
       }
-    } catch (error) {
-      toast({ title: 'Error', description: 'No se pudo guardar la configuración.', variant: 'destructive' });
+    } catch (error: any) {
+      toast({ title: 'Error al guardar', description: error.message, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -211,10 +220,12 @@ export default function SiteSettingsPage() {
           </CardContent>
         </Card>
 
-        <Button type="submit" className="w-full h-16 text-lg font-black rounded-2xl shadow-xl transition-all hover:scale-[1.01] active:scale-95" disabled={saving || uploading || uploadingSponsor}>
-          {saving ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <Save className="w-6 h-6 mr-2" />}
-          {saving ? 'Guardando Ajustes...' : 'Guardar Configuración Global'}
-        </Button>
+        <div className="sticky bottom-8 z-50 px-4">
+          <Button type="submit" className="w-full h-20 text-xl font-black rounded-2xl shadow-2xl transition-all hover:scale-[1.02] active:scale-95 bg-primary hover:bg-primary/90" disabled={saving || uploading || uploadingSponsor}>
+            {saving ? <Loader2 className="w-8 h-8 animate-spin mr-3" /> : <Save className="w-8 h-8 mr-3" />}
+            {saving ? 'Guardando Ajustes...' : 'GUARDAR CONFIGURACIÓN GLOBAL'}
+          </Button>
+        </div>
       </form>
     </div>
   );
