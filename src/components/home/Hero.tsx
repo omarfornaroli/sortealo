@@ -9,26 +9,28 @@ import Link from 'next/link';
 
 interface HeroProps {
   featuredRaffle?: any;
+  siteSettings?: any;
 }
 
-export function Hero({ featuredRaffle }: HeroProps) {
-  // Use the custom background if available, otherwise fallback to a default luxury image
-  const bgImage = featuredRaffle?.featuredBackgroundImageUrl || "https://picsum.photos/seed/luxury-prizes-montage/1920/1080";
+export function Hero({ featuredRaffle, siteSettings }: HeroProps) {
+  // La imagen principal pertenece al sitio (siteSettings)
+  // Usamos un fallback visualmente atractivo si no hay imagen configurada
+  const bgImage = siteSettings?.heroBackgroundImageUrl || "https://images.unsplash.com/photo-1568605117036-5fe5e790b738?q=80&w=2070&auto=format&fit=crop";
 
   return (
     <section className="relative min-h-[95vh] flex items-center pt-20 overflow-hidden bg-slate-950">
       <div className="absolute inset-0 z-0">
         <Image 
           src={bgImage} 
-          alt="Fondo de Premios" 
+          alt="Fondo Principal de Sortealo" 
           fill 
           className="object-cover opacity-60 brightness-50"
           priority
         />
-        {/* Gradients to ensure text readability - Enhanced for better contrast */}
+        {/* Degradados de contraste profundo para legibilidad premium */}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/60 to-transparent" />
-        <div className="absolute inset-0 bg-black/20" /> {/* Extra darkening layer */}
+        <div className="absolute inset-0 bg-black/30" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10 grid lg:grid-cols-2 gap-12 items-center">
@@ -39,21 +41,17 @@ export function Hero({ featuredRaffle }: HeroProps) {
           </div>
           
           <h1 
-            className="text-6xl lg:text-8xl font-headline font-bold leading-none tracking-tighter"
-            style={{ 
-              color: featuredRaffle?.featuredTitleColor || '#ffffff',
-              textShadow: '0 4px 12px rgba(0,0,0,0.5)'
-            }}
+            className="text-6xl lg:text-8xl font-headline font-bold leading-none tracking-tighter text-white"
+            style={{ textShadow: '0 4px 15px rgba(0,0,0,0.8)' }}
           >
             Tu <span className="text-primary italic">destino</span> de lujo hoy.
           </h1>
           
           <p 
-            className="text-xl max-w-lg leading-relaxed font-medium drop-shadow-md"
-            style={{ color: featuredRaffle?.featuredSubtitleColor || '#cbd5e1' }}
+            className="text-xl max-w-lg leading-relaxed font-medium text-slate-200 drop-shadow-lg"
           >
             Participa por autos deportivos, motos de alta cilindrada y la última tecnología. 
-            Transparencia total y seguridad garantizada.
+            Transparencia total y seguridad garantizada en cada sorteo.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-5 pt-4">
@@ -63,7 +61,7 @@ export function Hero({ featuredRaffle }: HeroProps) {
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
-            <Button asChild variant="outline" className="h-16 px-10 text-lg font-bold border-white/40 text-white bg-white/5 hover:bg-white/10 rounded-2xl backdrop-blur-md transition-all shadow-xl">
+            <Button asChild variant="outline" className="h-16 px-10 text-lg font-bold border-white/40 text-white bg-white/10 hover:bg-white/20 rounded-2xl backdrop-blur-md transition-all shadow-xl">
               <Link href="/winners">
                 Ver Ganadores
               </Link>
@@ -78,7 +76,9 @@ export function Hero({ featuredRaffle }: HeroProps) {
             <div className="flex items-center gap-3 text-white">
               <div className="flex -space-x-2">
                 {[1,2,3].map(i => (
-                  <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-950 bg-slate-800" />
+                  <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-950 bg-slate-800 flex items-center justify-center overflow-hidden">
+                    <img src={`https://picsum.photos/seed/${i}/32/32`} alt="user" />
+                  </div>
                 ))}
               </div>
               <span className="text-sm font-bold text-slate-400">+10k Participantes</span>
@@ -90,7 +90,7 @@ export function Hero({ featuredRaffle }: HeroProps) {
           <div className="absolute -inset-10 bg-primary/30 blur-[100px] rounded-full opacity-20 animate-pulse" />
           <Link 
             href={featuredRaffle ? `/raffles/${featuredRaffle._id}` : '#raffles'} 
-            className="block relative h-full w-full rounded-[4rem] overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.5)] group"
+            className="block relative h-full w-full rounded-[4rem] overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.6)] group"
           >
             {featuredRaffle ? (
               <>
@@ -102,9 +102,9 @@ export function Hero({ featuredRaffle }: HeroProps) {
                 />
                 <div className="absolute bottom-0 inset-x-0 p-12 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent">
                   <div className="flex justify-between items-end">
-                    <div className="space-y-2">
+                    <div className="space-y-2 text-left">
                       <Badge className="bg-primary text-white font-black px-4 py-1.5 rounded-full text-[10px] tracking-[0.2em] uppercase border-none">
-                        DESTACADO
+                        SORTEO DESTACADO
                       </Badge>
                       <h3 className="text-4xl font-headline font-bold text-white group-hover:text-primary transition-colors">
                         {featuredRaffle.name}
@@ -119,7 +119,7 @@ export function Hero({ featuredRaffle }: HeroProps) {
               </>
             ) : (
               <div className="w-full h-full bg-slate-900 flex items-center justify-center">
-                <p className="text-slate-500 font-bold uppercase tracking-widest">Descubriendo premios...</p>
+                <p className="text-slate-500 font-bold uppercase tracking-widest">Cargando premios increíbles...</p>
               </div>
             )}
           </Link>

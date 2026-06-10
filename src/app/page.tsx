@@ -2,6 +2,7 @@
 import RaffleCard from '@/components/RaffleCard';
 import dbConnect from '@/lib/db';
 import Raffle from '@/models/Raffle';
+import Settings from '@/models/Settings';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Hero } from '@/components/home/Hero';
@@ -9,19 +10,22 @@ import { Hero } from '@/components/home/Hero';
 export default async function HomePage() {
   try {
     await dbConnect();
-    // Obtenemos los sorteos activos
-    const raffles = await Raffle.find({ isFinished: false }).sort({ isFeatured: -1, createdAt: -1 }).lean();
     
-    // Serializamos para evitar problemas con objetos de MongoDB
+    // Obtenemos los sorteos activos y los ajustes globales en paralelo
+    const [raffles, siteSettings] = await Promise.all([
+      Raffle.find({ isFinished: false }).sort({ isFeatured: -1, createdAt: -1 }).lean(),
+      Settings.findOne({}).lean()
+    ]);
+    
     const serializedRaffles = JSON.parse(JSON.stringify(raffles));
+    const serializedSettings = JSON.parse(JSON.stringify(siteSettings || {}));
     
-    // Buscamos específicamente el primero que sea destacado, o el más reciente si no hay destacados
     const featuredRaffle = serializedRaffles.find((r: any) => r.isFeatured) || serializedRaffles[0];
 
     return (
       <div className="min-h-screen flex flex-col bg-white">
         <Navbar />
-        <Hero featuredRaffle={featuredRaffle} />
+        <Hero featuredRaffle={featuredRaffle} siteSettings={serializedSettings} />
         
         <main id="raffles" className="flex-1 py-24">
           <div className="container mx-auto px-4">
