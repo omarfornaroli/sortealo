@@ -13,12 +13,10 @@ interface HeroProps {
 }
 
 export function Hero({ featuredRaffle, siteSettings }: HeroProps) {
-  // La imagen principal pertenece al sitio (siteSettings)
   const bgImage = siteSettings?.heroBackgroundImageUrl || "https://images.unsplash.com/photo-1568605117036-5fe5e790b738?q=80&w=2070&auto=format&fit=crop";
 
   return (
     <section className="relative min-h-[95vh] flex items-center pt-20 overflow-hidden bg-slate-950">
-      {/* Contenedor de Imagen de Fondo - Sin efectos ni opacidad */}
       <div className="absolute inset-0 z-0">
         <Image 
           src={bgImage} 
@@ -31,12 +29,11 @@ export function Hero({ featuredRaffle, siteSettings }: HeroProps) {
 
       <div className="container mx-auto px-4 relative z-10 grid lg:grid-cols-2 gap-12 items-center">
         <div className="space-y-10 animate-fade-in-up">
-          <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-primary/20 border border-primary/30 text-primary text-xs font-black uppercase tracking-[0.2em] backdrop-blur-md shadow-xl">
-            <Star className="w-4 h-4 fill-primary" />
+          <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-black/40 border border-white/20 text-white text-xs font-black uppercase tracking-[0.2em] backdrop-blur-md shadow-xl">
+            <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
             Sorteos de Élite en Argentina
           </div>
           
-          {/* Títulos con sombra intensa para legibilidad sobre imagen clara */}
           <h1 
             className="text-6xl lg:text-8xl font-headline font-bold leading-none tracking-tighter text-white drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]"
           >

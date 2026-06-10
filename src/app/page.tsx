@@ -6,6 +6,7 @@ import Settings from '@/models/Settings';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Hero } from '@/components/home/Hero';
+import { Sponsors } from '@/components/home/Sponsors';
 
 export default async function HomePage() {
   try {
@@ -18,7 +19,7 @@ export default async function HomePage() {
     ]);
     
     const serializedRaffles = JSON.parse(JSON.stringify(raffles));
-    const serializedSettings = JSON.parse(JSON.stringify(siteSettings || {}));
+    const serializedSettings = JSON.parse(JSON.stringify(siteSettings || { sponsors: [] }));
     
     const featuredRaffle = serializedRaffles.find((r: any) => r.isFeatured) || serializedRaffles[0];
 
@@ -26,6 +27,9 @@ export default async function HomePage() {
       <div className="min-h-screen flex flex-col bg-white">
         <Navbar />
         <Hero featuredRaffle={featuredRaffle} siteSettings={serializedSettings} />
+        
+        {/* Nueva sección de sponsors integrada */}
+        <Sponsors sponsors={serializedSettings.sponsors} />
         
         <main id="raffles" className="flex-1 py-24">
           <div className="container mx-auto px-4">
