@@ -19,8 +19,17 @@ export default async function HomePage() {
     ]);
     
     const serializedRaffles = JSON.parse(JSON.stringify(raffles));
-    const serializedSettings = JSON.parse(JSON.stringify(siteSettings || { sponsors: [] }));
     
+    // Aseguramos que serializedSettings tenga una estructura válida siempre
+    const serializedSettings = siteSettings 
+      ? JSON.parse(JSON.stringify(siteSettings)) 
+      : { sponsors: [], heroBackgroundImageUrl: "" };
+    
+    // Garantizamos que sponsors sea un array aunque el documento exista pero no tenga el campo
+    if (!serializedSettings.sponsors) {
+      serializedSettings.sponsors = [];
+    }
+
     const featuredRaffle = serializedRaffles.find((r: any) => r.isFeatured) || serializedRaffles[0];
 
     return (
@@ -28,7 +37,7 @@ export default async function HomePage() {
         <Navbar />
         <Hero featuredRaffle={featuredRaffle} siteSettings={serializedSettings} />
         
-        {/* Nueva sección de sponsors integrada */}
+        {/* Sección de sponsors con datos garantizados */}
         <Sponsors sponsors={serializedSettings.sponsors} />
         
         <main id="raffles" className="flex-1 py-24">
