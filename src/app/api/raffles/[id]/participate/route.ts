@@ -13,7 +13,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const body = await req.json();
     const { email, name, dni, phone, quantity, sellerCode } = body;
 
-    // 1. Verificar existencia y disponibilidad
+    // 1. Verificar existencia, finalización manual y fecha de expiración
     const raffle = await Raffle.findById(id);
     if (!raffle) {
       return NextResponse.json({ message: 'Sorteo no encontrado' }, { status: 404 });
@@ -21,6 +21,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     if (raffle.isFinished) {
       return NextResponse.json({ message: 'Este sorteo ya ha finalizado' }, { status: 400 });
+    }
+
+    // Validación de fecha caducada en el servidor
+    if (raffle.drawDate && new Date(raffle.drawDate) < new Date()) {
+      return NextResponse.json({ message: 'La fecha límite de participación ha expirado.' }, { status: 400 });
     }
 
     if (raffle.soldTickets + quantity > raffle.maxTickets) {
@@ -40,8 +45,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     // 3. Obtener todos los tickets vendidos para evitar duplicados
+    // Usamos una consulta rápida para traer solo los tickets
+    const raffleForTickets = await Raffle.findById(id).select('participants.tickets').lean();
     const existingTickets = new Set(
-      raffle.participants.flatMap((p: any) => p.tickets)
+      raffleForTickets?.participants?.flatMap((p: any) => p.tickets) || []
     );
 
     // 4. Generar números aleatorios únicos de 6 dígitos
@@ -54,7 +61,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       }
     }
 
-    // 5. Crear el objeto de participación respetando el esquema
+    // 5. Crear el objeto de participación
     const participantData = {
       email: email.toLowerCase().trim(),
       name: name.trim(),
@@ -98,6 +105,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
               <p style="font-size: 14px; color: #94a3b8; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; margin-bottom: 20px; text-align: center;">Tus números asignados</p>
               <div style="text-align: center;">${ticketsHtml}</div>
             </div>
+            <p style="font-size: 12px; color: #94a3b8; margin-top: 30px; text-align: center;">ID de transacción: ${updatedRaffle._id}</p>
           </div>
         `
       });
