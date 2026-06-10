@@ -22,12 +22,13 @@ export function Hero({ featuredRaffle }: HeroProps) {
           src={bgImage} 
           alt="Fondo de Premios" 
           fill 
-          className="object-cover opacity-50 brightness-50"
+          className="object-cover opacity-60 brightness-50"
           priority
         />
-        {/* Gradients to ensure text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/40 to-transparent" />
+        {/* Gradients to ensure text readability - Enhanced for better contrast */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/60 to-transparent" />
+        <div className="absolute inset-0 bg-black/20" /> {/* Extra darkening layer */}
       </div>
 
       <div className="container mx-auto px-4 relative z-10 grid lg:grid-cols-2 gap-12 items-center">
@@ -39,13 +40,16 @@ export function Hero({ featuredRaffle }: HeroProps) {
           
           <h1 
             className="text-6xl lg:text-8xl font-headline font-bold leading-none tracking-tighter"
-            style={{ color: featuredRaffle?.featuredTitleColor || '#ffffff' }}
+            style={{ 
+              color: featuredRaffle?.featuredTitleColor || '#ffffff',
+              textShadow: '0 4px 12px rgba(0,0,0,0.5)'
+            }}
           >
             Tu <span className="text-primary italic">destino</span> de lujo hoy.
           </h1>
           
           <p 
-            className="text-xl max-w-lg leading-relaxed font-medium"
+            className="text-xl max-w-lg leading-relaxed font-medium drop-shadow-md"
             style={{ color: featuredRaffle?.featuredSubtitleColor || '#cbd5e1' }}
           >
             Participa por autos deportivos, motos de alta cilindrada y la última tecnología. 
@@ -53,13 +57,13 @@ export function Hero({ featuredRaffle }: HeroProps) {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-5 pt-4">
-            <Button asChild className="h-16 px-10 text-lg font-black rounded-2xl group shadow-2xl shadow-primary/40 bg-primary text-primary-foreground hover:bg-primary/90 transition-all">
+            <Button asChild className="h-16 px-10 text-lg font-black rounded-2xl group shadow-2xl shadow-primary/40 bg-primary text-primary-foreground hover:bg-primary/90 transition-all border-none">
               <Link href="#raffles" className="flex items-center gap-2">
                 EMPEZAR A GANAR
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
-            <Button asChild variant="outline" className="h-16 px-10 text-lg font-bold border-white/30 text-white hover:bg-white/10 rounded-2xl backdrop-blur-md transition-all">
+            <Button asChild variant="outline" className="h-16 px-10 text-lg font-bold border-white/40 text-white bg-white/5 hover:bg-white/10 rounded-2xl backdrop-blur-md transition-all shadow-xl">
               <Link href="/winners">
                 Ver Ganadores
               </Link>
@@ -69,7 +73,7 @@ export function Hero({ featuredRaffle }: HeroProps) {
           <div className="flex items-center gap-8 pt-10 border-t border-white/10">
             <div className="flex items-center gap-3 text-white">
               <ShieldCheck className="text-primary w-6 h-6" />
-              <span className="text-sm font-black uppercase tracking-widest">Pagos 100% Seguros</span>
+              <span className="text-sm font-black uppercase tracking-widest opacity-80">Pagos 100% Seguros</span>
             </div>
             <div className="flex items-center gap-3 text-white">
               <div className="flex -space-x-2">

@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ChevronLeft, Save, Loader2, Calendar, DollarSign, Ticket, Upload, Star, Palette, Image as ImageIcon } from 'lucide-react';
+import { ChevronLeft, Save, Loader2, Calendar, DollarSign, Ticket, Upload, Star, Palette, Image as ImageIcon, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 export default function EditRafflePage({ params }: { params: Promise<{ id: string }> }) {
@@ -21,7 +21,7 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
     isFinished: false,
     isFeatured: false,
     featuredTitleColor: '#ffffff',
-    featuredSubtitleColor: '#94a3b8',
+    featuredSubtitleColor: '#cbd5e1',
     featuredBackgroundImageUrl: '',
     ticketPrice: 0,
     maxTickets: 0,
@@ -50,7 +50,7 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
           isFinished: data.isFinished,
           isFeatured: data.isFeatured || false,
           featuredTitleColor: data.featuredTitleColor || '#ffffff',
-          featuredSubtitleColor: data.featuredSubtitleColor || '#94a3b8',
+          featuredSubtitleColor: data.featuredSubtitleColor || '#cbd5e1',
           featuredBackgroundImageUrl: data.featuredBackgroundImageUrl || '',
           ticketPrice: data.ticketPrice || 0,
           maxTickets: data.maxTickets || 0,
@@ -142,75 +142,108 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
           <p className="text-slate-500">Edita los parámetros de participación y premio.</p>
         </CardHeader>
         <CardContent className="p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Nombre del Sorteo</label>
-              <Input
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                required
-                className="h-12 rounded-xl"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Precio Ticket ($)</label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <Input
-                    type="number"
-                    className="pl-9 h-12 rounded-xl"
-                    value={formData.ticketPrice}
-                    onChange={(e) => setFormData({...formData, ticketPrice: Number(e.target.value)})}
-                    required
-                  />
-                </div>
+          <form onSubmit={handleSubmit} className="space-y-10">
+            {/* SECCIÓN 1: DATOS BÁSICOS */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <h3 className="font-bold text-slate-800 uppercase tracking-tighter text-sm">Información Básica</h3>
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Límite de Tickets</label>
-                <div className="relative">
-                  <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <Input
-                    type="number"
-                    className="pl-9 h-12 rounded-xl"
-                    value={formData.maxTickets}
-                    onChange={(e) => setFormData({...formData, maxTickets: Number(e.target.value)})}
-                    required
-                  />
-                </div>
-              </div>
-            </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Fecha y Hora de Cierre</label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Nombre del Sorteo</label>
                 <Input
-                  type="datetime-local"
-                  className="pl-9 h-12 rounded-xl"
-                  value={formData.drawDate}
-                  onChange={(e) => setFormData({...formData, drawDate: e.target.value})}
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
                   required
+                  className="h-12 rounded-xl"
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Precio Ticket ($)</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      type="number"
+                      className="pl-9 h-12 rounded-xl"
+                      value={formData.ticketPrice}
+                      onChange={(e) => setFormData({...formData, ticketPrice: Number(e.target.value)})}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Límite de Tickets</label>
+                  <div className="relative">
+                    <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      type="number"
+                      className="pl-9 h-12 rounded-xl"
+                      value={formData.maxTickets}
+                      onChange={(e) => setFormData({...formData, maxTickets: Number(e.target.value)})}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Fecha y Hora de Cierre</label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    type="datetime-local"
+                    className="pl-9 h-12 rounded-xl"
+                    value={formData.drawDate}
+                    onChange={(e) => setFormData({...formData, drawDate: e.target.value})}
+                    required
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-4 p-6 bg-amber-50 rounded-2xl border border-amber-100">
-              <div className="flex items-center space-x-3">
+            {/* SECCIÓN 2: IMÁGENES */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                <ImageIcon className="w-5 h-5 text-primary" />
+                <h3 className="font-bold text-slate-800 uppercase tracking-tighter text-sm">Contenido Visual</h3>
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Imagen Principal del Premio</label>
+                <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl p-6 bg-slate-50 transition-colors hover:bg-slate-100 relative group">
+                  <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-md">
+                    <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <label className="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-lg font-bold flex items-center gap-2">
+                        {uploading === 'imageUrl' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} 
+                        Cambiar Imagen Principal
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'imageUrl')} disabled={!!uploading} />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SECCIÓN 3: CONFIGURACIÓN HERO */}
+            <div className="space-y-6 p-6 bg-amber-50 rounded-[2rem] border border-amber-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                  <h3 className="font-bold text-amber-900 uppercase tracking-tighter text-sm">Configuración de Hero</h3>
+                </div>
                 <Checkbox 
                   id="isFeatured" 
                   checked={formData.isFeatured} 
                   onCheckedChange={(checked) => setFormData({...formData, isFeatured: !!checked})}
                 />
-                <div className="flex items-center gap-2">
-                  <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                  <label htmlFor="isFeatured" className="text-sm font-bold text-slate-700 uppercase tracking-tighter">Sorteo Destacado (Hero Principal)</label>
-                </div>
               </div>
 
               {formData.isFeatured && (
-                <div className="space-y-6 pt-4 border-t border-amber-200">
+                <div className="space-y-6 pt-4 border-t border-amber-200 animate-in fade-in slide-in-from-top-2">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase text-amber-600 flex items-center gap-1">
@@ -223,7 +256,7 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
                           onChange={(e) => setFormData({...formData, featuredTitleColor: e.target.value})}
                           className="w-10 h-10 rounded-lg cursor-pointer border-none"
                         />
-                        <span className="text-xs font-mono font-bold text-slate-500">{formData.featuredTitleColor}</span>
+                        <span className="text-xs font-mono font-bold text-amber-900/60">{formData.featuredTitleColor}</span>
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -237,7 +270,7 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
                           onChange={(e) => setFormData({...formData, featuredSubtitleColor: e.target.value})}
                           className="w-10 h-10 rounded-lg cursor-pointer border-none"
                         />
-                        <span className="text-xs font-mono font-bold text-slate-500">{formData.featuredSubtitleColor}</span>
+                        <span className="text-xs font-mono font-bold text-amber-900/60">{formData.featuredSubtitleColor}</span>
                       </div>
                     </div>
                   </div>
@@ -258,11 +291,11 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
                           </div>
                         </div>
                       ) : (
-                        <label className="cursor-pointer flex flex-col items-center gap-2">
+                        <label className="cursor-pointer flex flex-col items-center gap-2 text-center">
                           <div className="p-3 bg-amber-100 rounded-full text-amber-600">
                             {uploading === 'featuredBackgroundImageUrl' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
                           </div>
-                          <p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest">Subir fondo para el Hero</p>
+                          <p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest">Subir Fondo Especial para Hero</p>
                           <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'featuredBackgroundImageUrl')} disabled={!!uploading} />
                         </label>
                       )}
@@ -282,22 +315,6 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
               />
             </div>
 
-            <div className="space-y-4">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Imagen del Premio</label>
-              <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl p-6 bg-slate-50 transition-colors hover:bg-slate-100 relative group">
-                <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-md">
-                  <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <label className="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-lg font-bold flex items-center gap-2">
-                      {uploading === 'imageUrl' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} 
-                      Cambiar Imagen
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'imageUrl')} disabled={!!uploading} />
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <div className="flex items-center space-x-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
               <Checkbox 
                 id="isFinished" 
@@ -307,8 +324,8 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
               <label htmlFor="isFinished" className="text-sm font-bold text-slate-700">Cerrar sorteo manualmente</label>
             </div>
 
-            <Button type="submit" className="w-full h-14 text-lg font-bold rounded-xl shadow-lg" disabled={saving || !!uploading}>
-              {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+            <Button type="submit" className="w-full h-16 text-lg font-black rounded-2xl shadow-xl transition-all hover:scale-[1.01] active:scale-95" disabled={saving || !!uploading}>
+              {saving ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
               {saving ? 'Guardando...' : 'Guardar Cambios'}
             </Button>
           </form>

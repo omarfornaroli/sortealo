@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ChevronLeft, Save, Loader2, Upload, Star, Palette, Image as ImageIcon } from 'lucide-react';
+import { ChevronLeft, Save, Loader2, Upload, Star, Palette, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import Link from 'next/link';
 
@@ -22,7 +22,7 @@ export default function NewRafflePage() {
     drawDate: '',
     isFeatured: false,
     featuredTitleColor: '#ffffff',
-    featuredSubtitleColor: '#94a3b8',
+    featuredSubtitleColor: '#cbd5e1',
     featuredBackgroundImageUrl: '',
   });
   const [loading, setLoading] = useState(false);
@@ -68,7 +68,7 @@ export default function NewRafflePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.imageUrl) {
-      toast({ title: 'Atención', description: 'Debes cargar una imagen para el sorteo.', variant: 'destructive' });
+      toast({ title: 'Atención', description: 'Debes cargar una imagen del premio.', variant: 'destructive' });
       return;
     }
     setLoading(true);
@@ -111,66 +111,117 @@ export default function NewRafflePage() {
           <p className="text-slate-500">Configura los detalles del próximo gran premio.</p>
         </CardHeader>
         <CardContent className="p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Nombre del Sorteo</label>
-              <Input
-                placeholder="Ej: Tesla Model 3"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                required
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-10">
+            {/* SECCIÓN 1: DATOS BÁSICOS */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <h3 className="font-bold text-slate-800 uppercase tracking-tighter text-sm">Información Básica</h3>
+              </div>
+              
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Precio por Chance ($)</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Nombre del Sorteo</label>
                 <Input
-                  type="number"
-                  value={formData.ticketPrice}
-                  onChange={(e) => setFormData({...formData, ticketPrice: Number(e.target.value)})}
+                  placeholder="Ej: Tesla Model 3"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
                   required
+                  className="h-12 rounded-xl"
                 />
               </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Precio por Chance ($)</label>
+                  <Input
+                    type="number"
+                    value={formData.ticketPrice}
+                    onChange={(e) => setFormData({...formData, ticketPrice: Number(e.target.value)})}
+                    required
+                    className="h-12 rounded-xl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Máximo de Tickets</label>
+                  <Input
+                    type="number"
+                    value={formData.maxTickets}
+                    onChange={(e) => setFormData({...formData, maxTickets: Number(e.target.value)})}
+                    required
+                    className="h-12 rounded-xl"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Máximo de Tickets</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Fecha del Sorteo</label>
                 <Input
-                  type="number"
-                  value={formData.maxTickets}
-                  onChange={(e) => setFormData({...formData, maxTickets: Number(e.target.value)})}
+                  type="datetime-local"
+                  value={formData.drawDate}
+                  onChange={(e) => setFormData({...formData, drawDate: e.target.value})}
                   required
+                  className="h-12 rounded-xl"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Fecha del Sorteo</label>
-              <Input
-                type="datetime-local"
-                value={formData.drawDate}
-                onChange={(e) => setFormData({...formData, drawDate: e.target.value})}
-                required
-              />
+            {/* SECCIÓN 2: IMÁGENES */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                <ImageIcon className="w-5 h-5 text-primary" />
+                <h3 className="font-bold text-slate-800 uppercase tracking-tighter text-sm">Contenido Visual</h3>
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Imagen Principal del Premio</label>
+                <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl p-6 bg-slate-50 transition-colors hover:bg-slate-100 relative group">
+                  {formData.imageUrl ? (
+                    <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-md">
+                      <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <label className="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-lg font-bold flex items-center gap-2">
+                          <Upload className="w-4 h-4" /> Cambiar Imagen
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'imageUrl')} />
+                        </label>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="cursor-pointer flex flex-col items-center gap-3">
+                      <div className="p-4 bg-primary/10 rounded-full text-primary">
+                        {uploading === 'imageUrl' ? <Loader2 className="w-8 h-8 animate-spin" /> : <Upload className="w-8 h-8" />}
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-slate-700">Subir Imagen del Premio</p>
+                        <p className="text-xs text-slate-500">Aparecerá en las tarjetas y detalles.</p>
+                      </div>
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'imageUrl')} disabled={!!uploading} />
+                    </label>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-4 p-6 bg-slate-50 rounded-2xl border border-slate-200">
-              <div className="flex items-center space-x-3">
+            {/* SECCIÓN 3: CONFIGURACIÓN HERO / DESTACADO */}
+            <div className="space-y-6 p-6 bg-amber-50 rounded-[2rem] border border-amber-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                  <h3 className="font-bold text-amber-900 uppercase tracking-tighter text-sm">Configuración de Hero</h3>
+                </div>
                 <Checkbox 
                   id="isFeatured" 
                   checked={formData.isFeatured} 
                   onCheckedChange={(checked) => setFormData({...formData, isFeatured: !!checked})}
                 />
-                <div className="flex items-center gap-2">
-                  <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                  <label htmlFor="isFeatured" className="text-sm font-bold text-slate-700 uppercase tracking-tighter">Marcar como SORTEO DESTACADO (Hero)</label>
-                </div>
               </div>
+              
+              <p className="text-xs text-amber-700 font-medium">Habilita esta opción para que el sorteo aparezca en la parte superior de la página principal.</p>
 
               {formData.isFeatured && (
-                <div className="space-y-6 pt-4 border-t border-slate-200">
+                <div className="space-y-6 pt-4 border-t border-amber-200 animate-in fade-in slide-in-from-top-2">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-1">
+                      <label className="text-[10px] font-black uppercase text-amber-600 flex items-center gap-1">
                         <Palette className="w-3 h-3" /> Color Título
                       </label>
                       <div className="flex items-center gap-2">
@@ -180,11 +231,11 @@ export default function NewRafflePage() {
                           onChange={(e) => setFormData({...formData, featuredTitleColor: e.target.value})}
                           className="w-10 h-10 rounded-lg cursor-pointer border-none"
                         />
-                        <span className="text-xs font-mono font-bold text-slate-500">{formData.featuredTitleColor}</span>
+                        <span className="text-xs font-mono font-bold text-amber-900/60">{formData.featuredTitleColor}</span>
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-1">
+                      <label className="text-[10px] font-black uppercase text-amber-600 flex items-center gap-1">
                         <Palette className="w-3 h-3" /> Color Subtítulo
                       </label>
                       <div className="flex items-center gap-2">
@@ -194,16 +245,16 @@ export default function NewRafflePage() {
                           onChange={(e) => setFormData({...formData, featuredSubtitleColor: e.target.value})}
                           className="w-10 h-10 rounded-lg cursor-pointer border-none"
                         />
-                        <span className="text-xs font-mono font-bold text-slate-500">{formData.featuredSubtitleColor}</span>
+                        <span className="text-xs font-mono font-bold text-amber-900/60">{formData.featuredSubtitleColor}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-1">
+                    <label className="text-[10px] font-black uppercase text-amber-600 flex items-center gap-1">
                       <ImageIcon className="w-3 h-3" /> Imagen de Fondo del Hero
                     </label>
-                    <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-4 bg-white transition-colors hover:bg-slate-50 relative group">
+                    <div className="flex flex-col items-center justify-center border-2 border-dashed border-amber-200 rounded-xl p-4 bg-white transition-colors hover:bg-amber-50 relative group">
                       {formData.featuredBackgroundImageUrl ? (
                         <div className="relative w-full aspect-[21/9] rounded-lg overflow-hidden shadow-sm">
                           <img src={formData.featuredBackgroundImageUrl} alt="Hero BG Preview" className="w-full h-full object-cover" />
@@ -216,10 +267,10 @@ export default function NewRafflePage() {
                         </div>
                       ) : (
                         <label className="cursor-pointer flex flex-col items-center gap-2">
-                          <div className="p-3 bg-primary/5 rounded-full text-primary">
+                          <div className="p-3 bg-amber-100 rounded-full text-amber-600">
                             {uploading === 'featuredBackgroundImageUrl' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
                           </div>
-                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Subir fondo para el Hero</p>
+                          <p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest text-center">Subir Fondo Especial para Hero</p>
                           <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'featuredBackgroundImageUrl')} disabled={!!uploading} />
                         </label>
                       )}
@@ -230,46 +281,18 @@ export default function NewRafflePage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Descripción</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Descripción del Sorteo</label>
               <Textarea
-                placeholder="Detalles del premio..."
+                placeholder="Escribe los detalles y beneficios del premio..."
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
                 required
-                className="min-h-[120px]"
+                className="min-h-[120px] rounded-xl"
               />
             </div>
 
-            <div className="space-y-4">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Imagen del Premio</label>
-              <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl p-6 bg-slate-50 transition-colors hover:bg-slate-100 relative group">
-                {formData.imageUrl ? (
-                  <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-md">
-                    <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <label className="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-lg font-bold flex items-center gap-2">
-                        <Upload className="w-4 h-4" /> Cambiar Imagen
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'imageUrl')} />
-                      </label>
-                    </div>
-                  </div>
-                ) : (
-                  <label className="cursor-pointer flex flex-col items-center gap-3">
-                    <div className="p-4 bg-primary/10 rounded-full text-primary">
-                      {uploading === 'imageUrl' ? <Loader2 className="w-8 h-8 animate-spin" /> : <Upload className="w-8 h-8" />}
-                    </div>
-                    <div className="text-center">
-                      <p className="font-bold text-slate-700">Haz clic para subir</p>
-                      <p className="text-xs text-slate-500">PNG, JPG o WEBP</p>
-                    </div>
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'imageUrl')} disabled={!!uploading} />
-                  </label>
-                )}
-              </div>
-            </div>
-
-            <Button type="submit" className="w-full h-14 text-lg font-bold rounded-xl shadow-lg" disabled={loading || !!uploading}>
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+            <Button type="submit" className="w-full h-16 text-lg font-black rounded-2xl shadow-xl transition-all hover:scale-[1.01] active:scale-95" disabled={loading || !!uploading}>
+              {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
               {loading ? 'Publicando...' : 'Publicar Sorteo'}
             </Button>
           </form>
