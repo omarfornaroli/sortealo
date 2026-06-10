@@ -8,6 +8,8 @@ export interface IParticipant {
   phone: string;
   tickets: string[];
   purchaseDate: Date;
+  sellerId?: string;
+  sellerName?: string;
 }
 
 export interface IRaffle extends Document {
@@ -33,7 +35,9 @@ const ParticipantSchema = new Schema({
   dni: { type: String, required: true },
   phone: { type: String, required: true },
   tickets: [{ type: String }],
-  purchaseDate: { type: Date, default: Date.now }
+  purchaseDate: { type: Date, default: Date.now },
+  sellerId: { type: String },
+  sellerName: { type: String, default: 'Venta General' }
 }, { _id: false });
 
 const RaffleSchema: Schema = new Schema({

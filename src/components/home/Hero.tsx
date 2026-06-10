@@ -2,6 +2,7 @@
 "use client";
 
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { ArrowRight, ShieldCheck, Star } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -12,69 +13,74 @@ interface HeroProps {
 
 export function Hero({ featuredRaffle }: HeroProps) {
   return (
-    <section className="relative min-h-[90vh] flex items-center pt-20 overflow-hidden">
+    <section className="relative min-h-[95vh] flex items-center pt-20 overflow-hidden bg-slate-950">
       <div className="absolute inset-0 z-0">
         <Image 
-          src="https://picsum.photos/seed/elite-bg/1920/1080" 
-          alt="Luxury background" 
+          src="https://picsum.photos/seed/luxury-prizes-montage/1920/1080" 
+          alt="Premios Exclusivos" 
           fill 
-          className="object-cover opacity-20"
+          className="object-cover opacity-40 brightness-50"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-transparent to-transparent" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10 grid lg:grid-cols-2 gap-12 items-center">
-        <div className="space-y-8 animate-fade-in-up">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest">
-            <Star className="w-3 h-3 fill-primary" />
-            La plataforma de sorteos más confiable
+        <div className="space-y-10 animate-fade-in-up">
+          <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-primary/20 border border-primary/30 text-primary text-xs font-black uppercase tracking-[0.2em] backdrop-blur-md">
+            <Star className="w-4 h-4 fill-primary" />
+            Sorteos de Élite en Argentina
           </div>
           
           <h1 
-            className="text-5xl lg:text-7xl font-headline font-bold leading-tight"
-            style={{ color: featuredRaffle?.featuredTitleColor || 'inherit' }}
+            className="text-6xl lg:text-8xl font-headline font-bold leading-none tracking-tighter"
+            style={{ color: featuredRaffle?.featuredTitleColor || '#ffffff' }}
           >
-            Tu próxima <span className="text-primary italic">experiencia</span> de lujo comienza aquí.
+            Tu <span className="text-primary italic">destino</span> de lujo hoy.
           </h1>
           
           <p 
-            className="text-lg max-w-lg leading-relaxed font-medium"
-            style={{ color: featuredRaffle?.featuredSubtitleColor || '#64748b' }}
+            className="text-xl max-w-lg leading-relaxed font-medium"
+            style={{ color: featuredRaffle?.featuredSubtitleColor || '#cbd5e1' }}
           >
-            Participa por autos de alta gama, motos de competición y tecnología de punta. 
-            Seguridad garantizada y transparencia total en cada sorteo.
+            Participa por autos deportivos, motos de alta cilindrada y la última tecnología. 
+            Transparencia total y seguridad garantizada.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 pt-4">
-            <Button asChild size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-8 text-base group">
+          <div className="flex flex-col sm:flex-row gap-5 pt-4">
+            <Button asChild size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 h-16 px-10 text-lg font-black rounded-2xl group shadow-2xl shadow-primary/40">
               <Link href="#raffles">
-                Ver Sorteos Activos
-                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                EMPEZAR A GANAR
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="h-14 px-8 text-base border-slate-200 hover:bg-slate-50">
-              Cómo funciona
+            <Button size="lg" variant="outline" className="h-16 px-10 text-lg font-bold border-white/20 text-white hover:bg-white/10 rounded-2xl backdrop-blur-md">
+              Ver Ganadores
             </Button>
           </div>
 
-          <div className="flex items-center gap-6 pt-8 border-t border-slate-100">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="text-primary w-5 h-5" />
-              <span className="text-sm font-medium text-slate-700">Pagos Seguros</span>
+          <div className="flex items-center gap-8 pt-10 border-t border-white/10">
+            <div className="flex items-center gap-3 text-white">
+              <ShieldCheck className="text-primary w-6 h-6" />
+              <span className="text-sm font-black uppercase tracking-widest">Pagos 100% Seguros</span>
             </div>
-            <div className="w-px h-4 bg-slate-200" />
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-slate-500">Más de 10,000 ganadores felices</span>
+            <div className="flex items-center gap-3 text-white">
+              <div className="flex -space-x-2">
+                {[1,2,3].map(i => (
+                  <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-950 bg-slate-800" />
+                ))}
+              </div>
+              <span className="text-sm font-bold text-slate-400">+10k Participantes</span>
             </div>
           </div>
         </div>
 
-        <div className="relative aspect-square lg:aspect-auto lg:h-[600px] w-full animate-fade-in-up delay-150">
-          <div className="absolute -inset-4 bg-primary/20 blur-3xl rounded-full opacity-30 animate-pulse" />
+        <div className="relative aspect-square lg:aspect-auto lg:h-[650px] w-full animate-fade-in-up delay-150">
+          <div className="absolute -inset-10 bg-primary/30 blur-[100px] rounded-full opacity-20 animate-pulse" />
           <Link 
             href={featuredRaffle ? `/raffles/${featuredRaffle._id}` : '#raffles'} 
-            className="block relative h-full w-full rounded-[3rem] overflow-hidden border border-slate-100 shadow-2xl group cursor-pointer"
+            className="block relative h-full w-full rounded-[4rem] overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.5)] group"
           >
             {featuredRaffle ? (
               <>
@@ -82,28 +88,28 @@ export function Hero({ featuredRaffle }: HeroProps) {
                   src={featuredRaffle.imageUrl} 
                   alt={featuredRaffle.name} 
                   fill 
-                  className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  className="object-cover group-hover:scale-105 transition-transform duration-1000"
                 />
-                <div className="absolute bottom-0 inset-x-0 p-10 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+                <div className="absolute bottom-0 inset-x-0 p-12 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent">
                   <div className="flex justify-between items-end">
-                    <div className="space-y-1">
-                      <span className="text-primary font-bold text-xs tracking-widest uppercase mb-2 block">
-                        {featuredRaffle.isFeatured ? 'Premio Destacado' : 'Última oportunidad'}
-                      </span>
-                      <h3 className="text-3xl font-headline font-bold text-white group-hover:text-primary transition-colors">
+                    <div className="space-y-2">
+                      <Badge className="bg-primary text-white font-black px-4 py-1.5 rounded-full text-[10px] tracking-[0.2em] uppercase border-none">
+                        DESTACADO
+                      </Badge>
+                      <h3 className="text-4xl font-headline font-bold text-white group-hover:text-primary transition-colors">
                         {featuredRaffle.name}
                       </h3>
                     </div>
                     <div className="text-right">
-                      <span className="block text-white/60 text-[10px] font-black uppercase tracking-widest mb-1">Desde</span>
-                      <span className="text-4xl font-black text-primary">${featuredRaffle.ticketPrice}</span>
+                      <span className="block text-white/60 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Chance</span>
+                      <span className="text-5xl font-black text-primary">${featuredRaffle.ticketPrice}</span>
                     </div>
                   </div>
                 </div>
               </>
             ) : (
-              <div className="w-full h-full bg-slate-50 flex items-center justify-center">
-                <p className="text-slate-400 font-bold">Cargando premio destacado...</p>
+              <div className="w-full h-full bg-slate-900 flex items-center justify-center">
+                <p className="text-slate-500 font-bold uppercase tracking-widest">Descubriendo premios...</p>
               </div>
             )}
           </Link>
