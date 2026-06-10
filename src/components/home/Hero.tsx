@@ -14,41 +14,37 @@ interface HeroProps {
 
 export function Hero({ featuredRaffle, siteSettings }: HeroProps) {
   // La imagen principal pertenece al sitio (siteSettings)
-  // Usamos un fallback visualmente atractivo si no hay imagen configurada
   const bgImage = siteSettings?.heroBackgroundImageUrl || "https://images.unsplash.com/photo-1568605117036-5fe5e790b738?q=80&w=2070&auto=format&fit=crop";
 
   return (
     <section className="relative min-h-[95vh] flex items-center pt-20 overflow-hidden bg-slate-950">
+      {/* Contenedor de Imagen de Fondo - Sin efectos ni opacidad */}
       <div className="absolute inset-0 z-0">
         <Image 
           src={bgImage} 
           alt="Fondo Principal de Sortealo" 
           fill 
-          className="object-cover opacity-60 brightness-50"
+          className="object-cover"
           priority
         />
-        {/* Degradados de contraste profundo para legibilidad premium */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/60 to-transparent" />
-        <div className="absolute inset-0 bg-black/30" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10 grid lg:grid-cols-2 gap-12 items-center">
         <div className="space-y-10 animate-fade-in-up">
-          <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-primary/20 border border-primary/30 text-primary text-xs font-black uppercase tracking-[0.2em] backdrop-blur-md">
+          <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-primary/20 border border-primary/30 text-primary text-xs font-black uppercase tracking-[0.2em] backdrop-blur-md shadow-xl">
             <Star className="w-4 h-4 fill-primary" />
             Sorteos de Élite en Argentina
           </div>
           
+          {/* Títulos con sombra intensa para legibilidad sobre imagen clara */}
           <h1 
-            className="text-6xl lg:text-8xl font-headline font-bold leading-none tracking-tighter text-white"
-            style={{ textShadow: '0 4px 15px rgba(0,0,0,0.8)' }}
+            className="text-6xl lg:text-8xl font-headline font-bold leading-none tracking-tighter text-white drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]"
           >
             Tu <span className="text-primary italic">destino</span> de lujo hoy.
           </h1>
           
           <p 
-            className="text-xl max-w-lg leading-relaxed font-medium text-slate-200 drop-shadow-lg"
+            className="text-xl max-w-lg leading-relaxed font-bold text-white drop-shadow-[0_4px_10px_rgba(0,0,0,0.9)]"
           >
             Participa por autos deportivos, motos de alta cilindrada y la última tecnología. 
             Transparencia total y seguridad garantizada en cada sorteo.
@@ -61,19 +57,19 @@ export function Hero({ featuredRaffle, siteSettings }: HeroProps) {
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
-            <Button asChild variant="outline" className="h-16 px-10 text-lg font-bold border-white/40 text-white bg-white/10 hover:bg-white/20 rounded-2xl backdrop-blur-md transition-all shadow-xl">
+            <Button asChild variant="outline" className="h-16 px-10 text-lg font-bold border-white/40 text-white bg-white/20 hover:bg-white/30 rounded-2xl backdrop-blur-md transition-all shadow-2xl">
               <Link href="/winners">
                 Ver Ganadores
               </Link>
             </Button>
           </div>
 
-          <div className="flex items-center gap-8 pt-10 border-t border-white/10">
-            <div className="flex items-center gap-3 text-white">
+          <div className="flex items-center gap-8 pt-10 border-t border-white/20">
+            <div className="flex items-center gap-3 text-white drop-shadow-md">
               <ShieldCheck className="text-primary w-6 h-6" />
-              <span className="text-sm font-black uppercase tracking-widest opacity-80">Pagos 100% Seguros</span>
+              <span className="text-sm font-black uppercase tracking-widest">Pagos 100% Seguros</span>
             </div>
-            <div className="flex items-center gap-3 text-white">
+            <div className="flex items-center gap-3 text-white drop-shadow-md">
               <div className="flex -space-x-2">
                 {[1,2,3].map(i => (
                   <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-950 bg-slate-800 flex items-center justify-center overflow-hidden">
@@ -81,7 +77,7 @@ export function Hero({ featuredRaffle, siteSettings }: HeroProps) {
                   </div>
                 ))}
               </div>
-              <span className="text-sm font-bold text-slate-400">+10k Participantes</span>
+              <span className="text-sm font-bold text-white">+10k Participantes</span>
             </div>
           </div>
         </div>
