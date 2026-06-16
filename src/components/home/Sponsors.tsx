@@ -16,17 +16,17 @@ export function Sponsors({ sponsors = [] }: SponsorsProps) {
   useEffect(() => {
     const checkOverflow = () => {
       if (containerRef.current && contentRef.current) {
-        // Comparamos el ancho del contenido real con el ancho disponible del contenedor
+        // Obtenemos el ancho total del contenido y del contenedor
         const contentWidth = contentRef.current.scrollWidth;
         const containerWidth = containerRef.current.clientWidth;
         
-        // Solo animamos si el contenido es más ancho que la pantalla
+        // Animamos solo si el contenido es más ancho que el contenedor (pantalla)
         setShouldAnimate(contentWidth > containerWidth);
       }
     };
 
-    // Pequeño delay para asegurar que el layout inicial se haya calculado
-    const timer = setTimeout(checkOverflow, 100);
+    // Ejecutar después de que las imágenes tengan oportunidad de cargar/renderizar
+    const timer = setTimeout(checkOverflow, 500);
     
     window.addEventListener('resize', checkOverflow);
     return () => {
@@ -45,11 +45,11 @@ export function Sponsors({ sponsors = [] }: SponsorsProps) {
         </p>
       </div>
 
-      <div ref={containerRef} className="relative flex overflow-x-hidden min-h-[200px]">
-        {/* Capa Principal */}
+      <div ref={containerRef} className="relative flex overflow-hidden min-h-[200px]">
+        {/* Capa Principal: se mantiene en un solo renglón */}
         <div 
           ref={contentRef}
-          className={`flex gap-8 items-center py-8 ${shouldAnimate ? 'animate-marquee whitespace-nowrap pr-8' : 'mx-auto flex-wrap justify-center'}`}
+          className={`flex gap-8 items-center py-8 whitespace-nowrap ${shouldAnimate ? 'animate-marquee pr-8' : 'mx-auto justify-center'}`}
         >
           {sponsors.map((url, index) => {
             if (!url) return null;
@@ -69,7 +69,7 @@ export function Sponsors({ sponsors = [] }: SponsorsProps) {
           })}
         </div>
 
-        {/* Capa de Duplicado para Loop Infinito (Solo si hay desbordamiento) */}
+        {/* Capa de Duplicado: solo aparece si hay animación (overflow) */}
         {shouldAnimate && (
           <div className="absolute top-0 flex gap-8 animate-marquee2 whitespace-nowrap items-center py-8 h-full pr-8">
             {sponsors.map((url, index) => {
