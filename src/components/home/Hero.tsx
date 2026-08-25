@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from '@/components/ui/button';
@@ -31,26 +30,25 @@ export function Hero({ featuredRaffle, siteSettings }: HeroProps) {
         <div className="space-y-10 animate-fade-in-up">
           <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-black/40 border border-white/20 text-white text-xs font-black uppercase tracking-[0.2em] backdrop-blur-md shadow-xl">
             <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-            Sorteos de Élite en Argentina
+            {siteSettings?.heroBadgeText || 'Sorteos de Élite en Argentina'}
           </div>
           
           <h1 
             className="text-6xl lg:text-8xl font-headline font-bold leading-none tracking-tighter text-white drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]"
           >
-            Tu <span className="text-primary italic">destino</span> de lujo hoy.
+            {siteSettings?.heroTitle || 'Tu destino de lujo hoy.'}
           </h1>
           
           <p 
             className="text-xl max-w-lg leading-relaxed font-bold text-white drop-shadow-[0_4px_10px_rgba(0,0,0,0.9)]"
           >
-            Participa por autos deportivos, motos de alta cilindrada y la última tecnología. 
-            Transparencia total y seguridad garantizada en cada sorteo.
+            {siteSettings?.heroDescription || 'Participa por los mejores premios con transparencia total.'}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-5 pt-4">
             <Button asChild className="h-16 px-10 text-lg font-black rounded-2xl group shadow-2xl shadow-primary/40 bg-primary text-primary-foreground hover:bg-primary/90 transition-all border-none">
               <Link href="#raffles" className="flex items-center gap-2">
-                EMPEZAR A GANAR
+                {siteSettings?.heroButtonText || 'EMPEZAR A GANAR'}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
@@ -93,11 +91,11 @@ export function Hero({ featuredRaffle, siteSettings }: HeroProps) {
                   fill 
                   className="object-cover group-hover:scale-105 transition-transform duration-1000"
                 />
-                <div className="absolute bottom-0 inset-x-0 p-12 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent">
+                <div className="absolute bottom-0 inset-x-0 p-12 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent text-left">
                   <div className="flex justify-between items-end">
-                    <div className="space-y-2 text-left">
+                    <div className="space-y-2">
                       <Badge className="bg-primary text-white font-black px-4 py-1.5 rounded-full text-[10px] tracking-[0.2em] uppercase border-none">
-                        SORTEO DESTACADO
+                        DESTACADO
                       </Badge>
                       <h3 className="text-4xl font-headline font-bold text-white group-hover:text-primary transition-colors">
                         {featuredRaffle.name}

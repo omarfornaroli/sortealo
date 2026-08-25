@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Settings from '@/models/Settings';
@@ -33,38 +32,33 @@ export async function PUT(req: NextRequest) {
   await dbConnect();
   try {
     const data = await req.json();
-    
-    // Buscamos el documento de configuración único
     let settings = await Settings.findOne({});
     
     if (!settings) {
-      // Si no existe (caso raro porque GET lo crea), lo creamos
       settings = new Settings(data);
     } else {
-      // Actualizamos los campos recibidos de forma explícita
-      if (data.heroBackgroundImageUrl !== undefined) {
-        settings.heroBackgroundImageUrl = data.heroBackgroundImageUrl;
-      }
+      // Actualización masiva de campos de texto y configuración
+      const fields = [
+        'siteName', 'heroBackgroundImageUrl', 'heroBadgeText', 'heroTitle', 
+        'heroDescription', 'heroButtonText', 'sponsorsTitle', 'sponsors',
+        'activeRafflesTitle', 'activeRafflesSubtitle', 'footerDescription',
+        'contactEmail', 'contactPhone', 'contactAddress'
+      ];
       
-      if (data.sponsors !== undefined) {
-        settings.sponsors = data.sponsors;
-        // Obligamos a Mongoose a detectar el cambio en el array
-        settings.markModified('sponsors');
-      }
-      
-      if (data.siteName !== undefined) {
-        settings.siteName = data.siteName;
-      }
+      fields.forEach(field => {
+        if (data[field] !== undefined) {
+          settings[field] = data[field];
+          if (Array.isArray(data[field])) {
+            settings.markModified(field);
+          }
+        }
+      });
     }
 
     const savedSettings = await settings.save();
-    
     return NextResponse.json(savedSettings);
   } catch (error: any) {
     console.error('Error al guardar ajustes:', error);
-    return NextResponse.json({ 
-      message: 'Error al actualizar la configuración', 
-      error: error.message 
-    }, { status: 500 });
+    return NextResponse.json({ message: 'Error al actualizar la configuración', error: error.message }, { status: 500 });
   }
 }

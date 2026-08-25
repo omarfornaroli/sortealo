@@ -1,8 +1,7 @@
-
 import Link from 'next/link';
 import { Trophy, Instagram, Facebook, Twitter, Mail, Phone, MapPin } from 'lucide-react';
 
-export function Footer() {
+export function Footer({ settings }: { settings?: any }) {
   return (
     <footer className="bg-card border-t border-white/5 pt-16 pb-8">
       <div className="container mx-auto px-4">
@@ -12,10 +11,12 @@ export function Footer() {
               <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">
                 <Trophy className="text-primary-foreground w-5 h-5" />
               </div>
-              <span className="font-headline text-xl font-bold tracking-tight">Sortealo</span>
+              <span className="font-headline text-xl font-bold tracking-tight">
+                {settings?.siteName || 'Sortealo'}
+              </span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              La plataforma premium de sorteos online. Llevando la emoción de ganar los mejores premios a cada rincón de Argentina.
+              {settings?.footerDescription || 'La plataforma premium de sorteos online en Argentina.'}
             </p>
             <div className="flex gap-4">
               <Link href="#" className="w-10 h-10 rounded-full border border-white/5 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all">
@@ -55,22 +56,22 @@ export function Footer() {
             <ul className="space-y-4 text-sm text-muted-foreground">
               <li className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-primary" />
-                <span>contacto@Sortealo.com.ar</span>
+                <span>{settings?.contactEmail || 'contacto@sortealo.com.ar'}</span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-primary" />
-                <span>+54 11 1234-5678</span>
+                <span>{settings?.contactPhone || '+54 11 1234-5678'}</span>
               </li>
               <li className="flex items-center gap-3">
                 <MapPin className="w-4 h-4 text-primary" />
-                <span>Buenos Aires, Argentina</span>
+                <span>{settings?.contactAddress || 'Buenos Aires, Argentina'}</span>
               </li>
             </ul>
           </div>
         </div>
 
         <div className="pt-8 border-t border-white/5 text-center text-xs text-muted-foreground">
-          <p>© {new Date().getFullYear()} Sortealo S.R.L. Todos los derechos reservados.</p>
+          <p>© {new Date().getFullYear()} {settings?.siteName || 'Sortealo'} S.R.L. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>
