@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  db:
+    image: mongo:latest
+    container_name: sortealo-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - sortealo-network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sortealo-web
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGODB_URI=mongodb://db:27017/sortealo
+      - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-http://localhost:3000}
+      - SESSION_SECRET=${SESSION_SECRET:-sortealo-ultra-secure-static-key-2024-v99}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - MP_ACCESS_TOKEN=${MP_ACCESS_TOKEN}
+      - ENVIALOSIMPLE_API_KEY=${ENVIALOSIMPLE_API_KEY}
+    depends_on:
+      - db
+    networks:
+      - sortealo-network
+    restart: always
+
+networks:
+  sortealo-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
