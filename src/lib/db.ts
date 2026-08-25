@@ -1,13 +1,6 @@
-
 import mongoose, { Mongoose } from 'mongoose';
 
 const MONGODB_URI = process.env.MONGODB_URI || '';
-
-if (!MONGODB_URI) {
-  throw new Error(
-    'Please define the MONGODB_URI environment variable inside .env'
-  );
-}
 
 let cached = (global as any).mongoose;
 
@@ -16,6 +9,17 @@ if (!cached) {
 }
 
 async function dbConnect(): Promise<Mongoose> {
+  if (!MONGODB_URI) {
+    // Durante el build de Next.js, es posible que la URI no esté definida.
+    // Solo lanzamos el error si realmente necesitamos conectar en tiempo de ejecución.
+    if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
+      console.warn('Advertencia: MONGODB_URI no está definida.');
+    }
+    throw new Error(
+      'Please define the MONGODB_URI environment variable inside .env'
+    );
+  }
+
   if (cached.conn) {
     return cached.conn;
   }
