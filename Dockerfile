@@ -2,6 +2,7 @@
 FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
+
 COPY package.json package-lock.json* ./
 RUN npm ci
 
@@ -11,10 +12,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Variables ficticias para que el build no falle si Next.js intenta pre-renderizar
-ENV MONGODB_URI=mongodb://localhost:27017/build_db
 ENV NEXT_TELEMETRY_DISABLED 1
-
+# MONGODB_URI no es necesaria en build time gracias al fix en db.ts
 RUN npm run build
 
 # Etapa de ejecución
@@ -27,15 +26,9 @@ ENV NEXT_TELEMETRY_DISABLED 1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-COPY --from=builder /app/public ./public
-
-# Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
-
-# Aprovechamos el modo standalone de Next.js
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Solo copiamos lo necesario del build standalone
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
 USER nextjs
 
