@@ -1,14 +1,10 @@
 
+import 'server-only';
 import mongoose, { Mongoose } from 'mongoose';
 
 const MONGODB_URI = process.env.MONGODB_URI || '';
 
-if (!MONGODB_URI && process.env.NODE_ENV === 'production') {
-  console.warn('>>> [DATABASE] MONGODB_URI no está definida. Las operaciones a la BD fallarán.');
-}
-
 // Deshabilitar el buffering globalmente para evitar el error "buffering timed out"
-// Esto hace que las operaciones fallen inmediatamente si no hay conexión, en lugar de esperar 10s.
 mongoose.set('bufferCommands', false);
 
 let cached = (global as any).mongoose;
@@ -18,8 +14,10 @@ if (!cached) {
 }
 
 async function dbConnect(): Promise<Mongoose> {
+  // Solo validar la URI cuando se intenta conectar en el servidor
   if (!MONGODB_URI) {
     if (process.env.NODE_ENV === 'production') {
+      console.error('>>> [DATABASE] ERROR: MONGODB_URI no está definida en el entorno.');
       throw new Error('Please define the MONGODB_URI environment variable');
     }
     return null as any;
