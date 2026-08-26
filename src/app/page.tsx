@@ -71,7 +71,7 @@ export default async function HomePage() {
       <div className="min-h-screen flex items-center justify-center bg-white p-4">
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold text-red-600">Error de Conexión</h1>
-          <p className="text-slate-600">No se pudo conectar con la base de datos.</p>
+          <p className="text-slate-600">No se pudo conectar con la base de datos. {error.message}</p>
         </div>
       </div>
     );
