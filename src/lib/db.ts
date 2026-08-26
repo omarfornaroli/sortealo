@@ -10,10 +10,9 @@ if (!cached) {
 
 async function dbConnect(): Promise<Mongoose> {
   if (!MONGODB_URI) {
-    // Durante el build de Next.js, es posible que la URI no esté definida.
-    // Solo lanzamos el error si realmente necesitamos conectar en tiempo de ejecución.
+    // Si estamos en build de Next.js, evitamos lanzar error aquí para permitir la compilación
     if (process.env.NODE_ENV === 'production' && !process.env.MONGODB_URI) {
-      console.warn('Advertencia: MONGODB_URI no está definida.');
+      return null as any;
     }
     throw new Error(
       'Please define the MONGODB_URI environment variable inside .env'
@@ -25,12 +24,18 @@ async function dbConnect(): Promise<Mongoose> {
   }
 
   if (!cached.promise) {
+    console.log('>>> [DATABASE] Iniciando conexión con MongoDB...');
     const opts = {
       bufferCommands: false,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      console.log('>>> [DATABASE] MongoDB Conectado Exitosamente');
       return mongoose;
+    }).catch((err) => {
+      console.error('>>> [DATABASE] Error al conectar con MongoDB:', err.message);
+      cached.promise = null;
+      throw err;
     });
   }
   
