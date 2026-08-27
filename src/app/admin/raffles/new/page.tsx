@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { apiFetch } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,7 +31,7 @@ export default function NewRafflePage() {
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
     if (!token) {
-      window.location.replace('/auth/login');
+      router.push('/auth/login');
     }
   }, []);
 
@@ -43,7 +44,7 @@ export default function NewRafflePage() {
     formDataUpload.append('file', file);
 
     try {
-      const res = await fetch('/api/upload', {
+      const res = await apiFetch('/api/upload', {
         method: 'POST',
         body: formDataUpload,
       });
@@ -72,7 +73,7 @@ export default function NewRafflePage() {
     
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch('/api/raffles', {
+      const res = await apiFetch('/api/raffles', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

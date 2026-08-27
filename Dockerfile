@@ -13,6 +13,11 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED 1
+# Permitir pasar el basePath en tiempo de build
+ARG NEXT_PUBLIC_BASE_PATH
+ARG BASE_PATH
+ENV NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH}
+ENV BASE_PATH=${BASE_PATH}
 # MONGODB_URI no es necesaria en build time gracias al fix en db.ts
 RUN npm run build
 

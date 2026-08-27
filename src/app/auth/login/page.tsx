@@ -2,6 +2,8 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
+import { apiFetch } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -14,11 +16,12 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     // Si ya hay un token, redirigir al admin
     if (localStorage.getItem('adminToken')) {
-      window.location.replace('/admin');
+      router.push('/admin');
     }
   }, []);
 
@@ -28,7 +31,7 @@ function LoginForm() {
     
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), password }),
@@ -42,7 +45,7 @@ function LoginForm() {
         localStorage.setItem('userSession', JSON.stringify(data.user));
 
         toast({ title: 'Bienvenido', description: 'Accediendo...' });
-        window.location.replace('/admin');
+        router.push('/admin');
       } else {
         toast({ 
           title: 'Error', 

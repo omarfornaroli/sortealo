@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { apiFetch } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -34,7 +35,7 @@ export default function SiteSettingsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetch('/api/settings')
+    apiFetch('/api/settings')
       .then(res => res.json())
       .then(data => {
         setFormData({
@@ -68,7 +69,7 @@ export default function SiteSettingsPage() {
     const fd = new FormData();
     fd.append('file', file);
     try {
-      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      const res = await apiFetch('/api/upload', { method: 'POST', body: fd });
       if (res.ok) {
         const data = await res.json();
         setFormData(prev => ({ ...prev, heroBackgroundImageUrl: data.url }));
@@ -88,7 +89,7 @@ export default function SiteSettingsPage() {
     const fd = new FormData();
     fd.append('file', file);
     try {
-      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      const res = await apiFetch('/api/upload', { method: 'POST', body: fd });
       if (res.ok) {
         const data = await res.json();
         setFormData(prev => ({ ...prev, sponsors: [...prev.sponsors, data.url] }));
@@ -109,7 +110,7 @@ export default function SiteSettingsPage() {
     setSaving(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch('/api/settings', {
+      const res = await apiFetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(formData),

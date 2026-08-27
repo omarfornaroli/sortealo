@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, use } from 'react';
+import { apiFetch } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,7 +35,7 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
   const loadParticipants = async () => {
     setRefreshing(true);
     try {
-      const res = await fetch(`/api/raffles/${id}`);
+      const res = await apiFetch(`/api/raffles/${id}`);
       if (!res.ok) throw new Error('No se pudo cargar el sorteo');
       const data = await res.json();
       setRaffle(data);

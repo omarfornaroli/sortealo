@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
+import { apiFetch } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,11 +34,11 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
     if (!token) {
-      window.location.replace('/auth/login');
+      router.push('/auth/login');
       return;
     }
 
-    fetch(`/api/raffles/${id}`)
+    apiFetch(`/api/raffles/${id}`)
       .then(res => res.json())
       .then(data => {
         setFormData({
@@ -67,7 +68,7 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
     formDataUpload.append('file', file);
 
     try {
-      const res = await fetch('/api/upload', {
+      const res = await apiFetch('/api/upload', {
         method: 'POST',
         body: formDataUpload,
       });
@@ -92,7 +93,7 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
     
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await fetch(`/api/raffles/${id}`, {
+      const res = await apiFetch(`/api/raffles/${id}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',

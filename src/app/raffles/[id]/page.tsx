@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { ShieldCheck, Ticket, User, Clock, ChevronLeft, CreditCard, Loader2, CheckCircle2, Store, AlertCircle } from 'lucide-react';
 import { useState, useEffect, use, Suspense } from 'react';
+import { apiFetch } from '@/lib/api';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -38,7 +39,7 @@ function RaffleContent({ id }: { id: string }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetch(`/api/raffles/${id}`)
+    apiFetch(`/api/raffles/${id}`)
       .then(res => res.json())
       .then(data => {
         setRaffle(data);
@@ -68,7 +69,7 @@ function RaffleContent({ id }: { id: string }) {
 
     setPurchasing(true);
     try {
-      const res = await fetch(`/api/raffles/${id}/participate`, {
+      const res = await apiFetch(`/api/raffles/${id}/participate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData, quantity, sellerCode }),
@@ -99,7 +100,7 @@ function RaffleContent({ id }: { id: string }) {
 
     setPurchasing(true);
     try {
-      const res = await fetch('/api/mercadopago/preference', {
+      const res = await apiFetch('/api/mercadopago/preference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

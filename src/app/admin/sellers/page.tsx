@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { apiFetch } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -42,8 +43,8 @@ export default function SellersPage() {
   const loadData = async () => {
     try {
       const [sellersRes, rafflesRes] = await Promise.all([
-        fetch('/api/sellers'),
-        fetch('/api/raffles')
+        apiFetch('/api/sellers'),
+        apiFetch('/api/raffles')
       ]);
       const sellersData = await sellersRes.json();
       const rafflesData = await rafflesRes.json();
@@ -65,7 +66,7 @@ export default function SellersPage() {
     if (!name) return;
     setCreating(true);
     try {
-      const res = await fetch('/api/sellers', {
+      const res = await apiFetch('/api/sellers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),

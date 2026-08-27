@@ -2,6 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { apiFetch } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -10,6 +12,7 @@ import { ShieldAlert, LogIn, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,10 +22,10 @@ export default function LoginPage() {
     // Verificar si ya hay sesión activa
     const checkSession = async () => {
       try {
-        const res = await fetch('/api/auth/session');
+        const res = await apiFetch('/api/auth/session');
         const data = await res.json();
         if (data.isAuthenticated) {
-          window.location.replace('/admin');
+          router.push('/admin');
         }
       } catch (err) {
         console.error('Error verificando sesión inicial');
@@ -37,7 +40,7 @@ export default function LoginPage() {
     
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), password }),
@@ -48,7 +51,7 @@ export default function LoginPage() {
       if (res.ok) {
         toast({ title: 'Bienvenido', description: 'Accediendo al panel administrativo...' });
         // location.replace es más agresivo para asegurar que se limpie el estado del cliente
-        window.location.replace('/admin');
+        router.push('/admin');
       } else {
         toast({ 
           title: 'Error de acceso', 

@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { apiFetch } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Users, Ticket as TicketIcon, Loader2, Trophy, ArrowRight, Calendar, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -38,7 +39,7 @@ export function AdminRaffleList({ initialRaffles }: { initialRaffles: Raffle[] }
     
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/raffles/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/raffles/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setRaffles(prev => prev.filter(r => r._id !== id));
         toast({ title: 'Sorteo eliminado', description: 'Los datos se han borrado del sistema.' });

@@ -1,7 +1,13 @@
-import type {NextConfig} from 'next';
+import type { NextConfig } from 'next';
+
+// Se permite definir el prefijo tanto mediante la variable pública (para el cliente)
+// como mediante una variable interna (BASE_PATH) que solo el servidor necesita.
+// Prioridad: BASE_PATH > BASE_PATH > ''
+const base = process.env.BASE_PATH || '';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  basePath: base,
+  assetPrefix: base,
   output: 'standalone',
   typescript: {
     ignoreBuildErrors: true,

@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
+import { apiFetch } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Trophy, ChevronLeft, Loader2, Sparkles, User, Ticket, CheckCircle2 } from 'lucide-react';
@@ -20,7 +21,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
 
   const fetchRaffle = async () => {
     try {
-      const res = await fetch(`/api/raffles/${id}`);
+      const res = await apiFetch(`/api/raffles/${id}`);
       const data = await res.json();
       setRaffle(data);
       if (data.isFinished && data.winnerEmail) {
@@ -43,7 +44,7 @@ export default function DrawPage({ params }: { params: Promise<{ id: string }> }
     await new Promise(resolve => setTimeout(resolve, 2500));
 
     try {
-      const res = await fetch(`/api/raffles/${id}/draw`, { method: 'POST' });
+      const res = await apiFetch(`/api/raffles/${id}/draw`, { method: 'POST' });
       const data = await res.json();
 
       if (res.ok && data.success) {

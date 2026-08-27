@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { apiFetch } from '@/lib/api';
 import RaffleCard from '@/components/RaffleCard';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -19,8 +20,8 @@ export default function HomePage() {
     async function loadPageData() {
       try {
         const [rafflesRes, settingsRes] = await Promise.all([
-          fetch('/api/raffles'),
-          fetch('/api/settings')
+          apiFetch('/api/raffles'),
+          apiFetch('/api/settings'),
         ]);
 
         if (!rafflesRes.ok || !settingsRes.ok) {

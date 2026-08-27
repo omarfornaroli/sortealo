@@ -2,6 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { apiFetch } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { LayoutDashboard, LogOut, Plus, Ticket as TicketIcon, Users, Trophy, History, Settings, Loader2, AlertCircle, RefreshCw, Link as LinkIcon, Sliders } from 'lucide-react';
@@ -10,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
 
 export default function AdminPage() {
+  const router = useRouter();
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -21,7 +24,7 @@ export default function AdminPage() {
   const loadData = async (showLoading = true) => {
     const token = localStorage.getItem('adminToken');
     if (!token) {
-      window.location.replace('/auth/login');
+      router.push('/auth/login');
       return;
     }
 
@@ -29,7 +32,7 @@ export default function AdminPage() {
     else setRefreshing(true);
 
     try {
-      const res = await fetch('/api/raffles?admin=true', {
+      const res = await apiFetch('/api/raffles?admin=true', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -73,7 +76,7 @@ export default function AdminPage() {
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
     localStorage.removeItem('userSession');
-    window.location.replace('/auth/login');
+    router.push('/auth/login');
   };
 
   if (loading) return (

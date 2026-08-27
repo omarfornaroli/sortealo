@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, Suspense } from 'react';
+import { apiFetch } from '@/lib/api';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,7 +29,7 @@ function SetupForm() {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/setup-password', {
+      const res = await apiFetch('/api/auth/setup-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, password }),
