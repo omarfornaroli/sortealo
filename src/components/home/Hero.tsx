@@ -103,7 +103,7 @@ export function Hero({ featuredRaffle, siteSettings }: HeroProps) {
                     </div>
                     <div className="text-right">
                       <span className="block text-white/60 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Chance</span>
-                      <span className="text-5xl font-black text-primary">${featuredRaffle.ticketPrice}</span>
+                      <span className="text-5xl font-black text-primary">{featuredRaffle.ticketOptions && featuredRaffle.ticketOptions.length > 0 ? Math.min(...featuredRaffle.ticketOptions.map((opt) => opt.price)) : featuredRaffle.ticketPrice}</span>
                     </div>
                   </div>
                 </div>

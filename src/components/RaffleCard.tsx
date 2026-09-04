@@ -22,10 +22,10 @@ export default function RaffleCard({ raffle }: RaffleCardProps) {
   return (
     <Card className="overflow-hidden border-slate-200 bg-white shadow-md hover:shadow-2xl transition-all duration-500 group rounded-[2rem]">
       <div className="relative aspect-video overflow-hidden">
-        <img 
-          src={raffle.prizes?.[0]?.imageUrl || '/images/placeholder.png'} 
-          alt={raffle.name} 
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+        <img
+          src={raffle.prizes?.[0]?.imageUrl || '/images/placeholder.png'}
+          alt={raffle.name}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
         />
         <div className="absolute top-4 left-4 flex gap-2">
           <div className="bg-primary text-white px-4 py-1.5 rounded-full text-xs font-black shadow-lg border-2 border-white/20">
@@ -39,7 +39,7 @@ export default function RaffleCard({ raffle }: RaffleCardProps) {
         </div>
         <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-200 shadow-xl">
           <span className="text-[10px] font-black text-slate-400 uppercase block leading-none mb-1">Desde</span>
-          <span className="text-xl font-black text-primary">${raffle.ticketPrice}</span>
+          <span className="text-xl font-black text-primary">{raffle.ticketOptions && raffle.ticketOptions.length > 0 ? Math.min(...raffle.ticketOptions.map((opt) => opt.price)) : raffle.ticketPrice}</span>
         </div>
       </div>
       <CardHeader className="p-8">
