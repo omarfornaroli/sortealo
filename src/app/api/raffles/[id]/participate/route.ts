@@ -4,11 +4,12 @@ import dbConnect from '@/lib/db';
 import Raffle from '@/models/Raffle';
 import Seller from '@/models/Seller';
 import { sendEmail } from '@/lib/email';
+import Settings from '@/models/Settings';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   await dbConnect();
   const { id } = await params;
-  
+
   try {
     const body = await req.json();
     const { email, name, dni, phone, quantity, sellerCode } = body;
@@ -37,9 +38,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (sellerCode) {
       const seller = await Seller.findOne({ code: sellerCode, active: true });
       if (seller) {
-        sellerInfo = { 
-          sellerId: seller._id.toString(), 
-          sellerName: seller.name 
+        sellerInfo = {
+          sellerId: seller._id.toString(),
+          sellerName: seller.name
         };
       }
     }
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     // 6. Actualización Atómica
     const updatedRaffle = await Raffle.findOneAndUpdate(
       { _id: id, isFinished: false },
-      { 
+      {
         $push: { participants: participantData },
         $inc: { soldTickets: quantity }
       },
@@ -88,36 +89,42 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     // 7. Enviar Email
     try {
+      // Load email templates from Settings
+      const settings = await Settings.findOne().lean();
+      const subjectTemplate = settings?.purchaseEmailSubject || `Tus números para el sorteo: ${updatedRaffle.name}`;
+      const bodyTemplate = settings?.purchaseEmailBody || '';
+
       const ticketsHtml = generatedTickets
         .map(t => `<span style="display: inline-block; background: #ffffff; border: 1px solid #e2e8f0; padding: 10px 15px; margin: 5px; border-radius: 12px; font-family: monospace; font-size: 18px; font-weight: bold; color: #2563eb; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">${t}</span>`)
         .join('');
 
+      // Simple placeholder replacement
+      const replace = (template: string) =>
+        template
+          .replace(/{{\s*name\s*}}/g, name)
+          .replace(/{{\s*quantity\s*}}/g, String(quantity))
+          .replace(/{{\s*raffleName\s*}}/g, updatedRaffle.name)
+          .replace(/{{\s*ticketsHtml\s*}}/g, ticketsHtml)
+          .replace(/{{\s*winnerTicket\s*}}/g, '') // not used here
+          .replace(/{{\s*setupLink\s*}}/g, '');
+
+      const subject = replace(subjectTemplate);
+      const html = replace(bodyTemplate);
+
       await sendEmail({
         to: email.toLowerCase().trim(),
-        subject: `🎟️ Tus números para el sorteo: ${updatedRaffle.name} - Sortealo`,
-        html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 40px; border: 1px solid #eee; border-radius: 30px; background-color: #ffffff;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #2563eb; margin-bottom: 10px;">¡Mucha suerte, ${name}!</h1>
-              <p style="font-size: 18px; color: #475569; font-weight: 500;">Has adquirido <strong>${quantity} chances</strong> con éxito.</p>
-            </div>
-            <div style="background-color: #f8fafc; padding: 30px; border-radius: 24px; border: 1px solid #f1f5f9;">
-              <p style="font-size: 14px; color: #94a3b8; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; margin-bottom: 20px; text-align: center;">Tus números asignados</p>
-              <div style="text-align: center;">${ticketsHtml}</div>
-            </div>
-            <p style="font-size: 12px; color: #94a3b8; margin-top: 30px; text-align: center;">ID de transacción: ${updatedRaffle._id}</p>
-          </div>
-        `
+        subject,
+        html
       });
     } catch (emailErr) {
       console.error('Error enviando email:', emailErr);
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      tickets: generatedTickets 
+    return NextResponse.json({
+      success: true,
+      tickets: generatedTickets
     }, { status: 200 });
-    
+
   } catch (error: any) {
     return NextResponse.json({ message: 'Error al procesar la participación', error: error.message }, { status: 500 });
   }

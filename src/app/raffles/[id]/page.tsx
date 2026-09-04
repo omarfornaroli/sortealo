@@ -13,6 +13,7 @@ import { ShieldCheck, Ticket, User, Clock, ChevronLeft, CreditCard, Loader2, Che
 import { useState, useEffect, use, Suspense } from 'react';
 import { apiFetch } from '@/lib/api';
 import Image from 'next/image';
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
@@ -172,7 +173,21 @@ function RaffleContent({ id }: { id: string }) {
           <div className="grid lg:grid-cols-2 gap-16">
             <div className="space-y-10">
               <div className="relative aspect-[4/3] rounded-[3rem] overflow-hidden border border-slate-100 shadow-2xl">
-                {raffle.imageUrl && <Image src={raffle.imageUrl} alt={raffle.name} fill className="object-cover" priority />}
+                {raffle.prizes && raffle.prizes.length > 0 ? (
+                  <Carousel className="h-full">
+                    <CarouselContent className="h-full w-full">
+                      {raffle.prizes.map((prize: any, idx: number) => (
+                        <CarouselItem key={idx} className="h-full w-full relative aspect-[4/3]">
+                          <Image src={prize.imageUrl || '/images/placeholder.png'} alt={`${raffle.name} - ${prize.title}`} fill className="object-cover" priority sizes="100%" />
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious />
+                    <CarouselNext />
+                  </Carousel>
+                ) : (
+                  <Image src={raffle.prizes?.[0]?.imageUrl || '/images/placeholder.png'} alt={raffle.name} fill className="object-cover" priority sizes="100%" />
+                )}
                 {isExpired && (
                   <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
                     <Badge className="bg-red-600 text-white text-2xl font-black px-10 py-4 rounded-2xl shadow-2xl">
@@ -189,12 +204,27 @@ function RaffleContent({ id }: { id: string }) {
                     <span className={`block text-[10px] uppercase font-black mb-1 tracking-widest ${isExpired ? 'text-red-400' : 'text-slate-400'}`}>Sorteó el</span>
                     <span className={`font-headline font-bold text-xl ${isExpired ? 'text-red-900' : 'text-slate-900'}`}>{formattedDrawDate || 'Próximamente'}</span>
                   </div>
-                  <div className="bg-slate-900 text-white p-8 rounded-[2rem]">
-                    <span className="block text-[10px] uppercase text-slate-500 font-black mb-1 tracking-widest">Valor Chance</span>
-                    <span className="font-headline font-bold text-3xl text-primary">${raffle.ticketPrice}</span>
-                  </div>
+
                 </div>
               </div>
+
+              {/* Winners display for finished raffles with multiple prizes */}
+              {raffle.isFinished && raffle.prizeWinners && raffle.prizeWinners.length > 0 && (
+                <div className="mt-12">
+                  <h2 className="text-2xl font-bold mb-4 text-slate-900">Ganadores</h2>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {raffle.prizeWinners.map((winner: any, idx: number) => (
+                      <div key={idx} className="p-4 border rounded-lg bg-primary/5">
+                        <h3 className="font-semibold text-slate-800 mb-1">
+                          {raffle.prizes && raffle.prizes[idx] ? raffle.prizes[idx].title : `Premio ${idx + 1}`}
+                        </h3>
+                        <p className="text-sm text-slate-700">{winner.name} ({winner.email})</p>
+                        <p className="text-xs text-slate-500 mt-1">Ticket: {winner.ticket}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-8">
@@ -228,15 +258,15 @@ function RaffleContent({ id }: { id: string }) {
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <Label className="text-xs font-black uppercase text-slate-400">Cantidad de chances</Label>
-                          <div className="grid grid-cols-4 gap-2">
-                            {[1, 5, 10, 20].map(q => (
-                              <button 
-                                key={q}
+                          <div className="grid grid-cols-2 gap-2">
+                            {raffle.ticketOptions?.map((opt: any, idx: number) => (
+                              <button
+                                key={idx}
                                 type="button"
-                                onClick={() => setQuantity(q)}
-                                className={`h-14 rounded-xl border-2 font-bold transition-all ${quantity === q ? 'border-primary bg-primary/5 text-primary' : 'border-slate-100 text-slate-500 hover:border-slate-200'}`}
+                                onClick={() => setQuantity(opt.quantity)}
+                                className={`h-14 rounded-xl border-2 font-bold transition-all ${quantity === opt.quantity ? 'border-primary bg-primary/5 text-primary' : 'border-slate-100 text-slate-500 hover:border-slate-200'}`}
                               >
-                                {q}
+                                {opt.quantity}
                               </button>
                             ))}
                           </div>
@@ -290,7 +320,7 @@ function RaffleContent({ id }: { id: string }) {
                       <div className="pt-6 space-y-4">
                         <div className="flex justify-between items-center bg-slate-900 p-6 rounded-2xl text-white mb-4">
                           <span className="font-bold">Total a pagar:</span>
-                          <span className="text-3xl font-black text-primary">${raffle.ticketPrice * quantity}</span>
+                          <span className="text-3xl font-black text-primary">${raffle.ticketOptions?.find(o => o.quantity === quantity)?.price || 0}</span>
                         </div>
 
                         <Button 
@@ -302,15 +332,7 @@ function RaffleContent({ id }: { id: string }) {
                           PAGAR CON MERCADO PAGO
                         </Button>
 
-                        <Button 
-                          type="button"
-                          variant="outline"
-                          onClick={handleTestPurchase}
-                          disabled={purchasing}
-                          className="w-full h-14 border-dashed border-primary text-primary rounded-xl font-bold"
-                        >
-                          PRUEBA: COMPRA DIRECTA
-                        </Button>
+                        
                       </div>
                     </form>
                   </Card>

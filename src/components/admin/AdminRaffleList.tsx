@@ -27,6 +27,9 @@ interface Raffle {
   maxTickets: number;
   winnerEmail?: string;
   winnerTicket?: string;
+  // New fields for multi‑prize support
+  prizes?: { title: string; description: string; imageUrl: string }[];
+  prizeWinners?: { email: string; name: string; ticket: string }[];
 }
 
 export function AdminRaffleList({ initialRaffles }: { initialRaffles: Raffle[] }) {
@@ -59,7 +62,7 @@ export function AdminRaffleList({ initialRaffles }: { initialRaffles: Raffle[] }
         <Card key={raffle._id} className="overflow-hidden border-slate-100 bg-white group rounded-[2.5rem] shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col">
           <div className="relative h-60 overflow-hidden bg-slate-100">
             <img 
-              src={raffle.imageUrl} 
+              src={raffle.prizes?.[0]?.imageUrl || '/images/placeholder.png'} 
               alt={raffle.name} 
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
             />
@@ -108,17 +111,24 @@ export function AdminRaffleList({ initialRaffles }: { initialRaffles: Raffle[] }
               </div>
             </div>
 
-            {raffle.isFinished && raffle.winnerEmail && (
-              <div className="p-5 bg-amber-50 rounded-[1.5rem] border border-amber-200 animate-in zoom-in-95 duration-300">
-                <div className="flex items-center gap-2 mb-2">
-                  <Trophy className="w-4 h-4 text-amber-600" />
-                  <span className="text-xs font-black text-amber-800 uppercase tracking-widest">Ganador</span>
-                </div>
-                <p className="text-sm font-bold text-slate-900 truncate">{raffle.winnerEmail}</p>
-                <div className="flex items-center gap-2 mt-2">
-                   <span className="text-[10px] font-black text-slate-400 uppercase">Ticket:</span>
-                   <span className="bg-white px-2 py-0.5 rounded-lg border border-amber-200 text-amber-700 font-mono font-black text-xs">{raffle.winnerTicket}</span>
-                </div>
+            {raffle.isFinished && raffle.prizeWinners && raffle.prizeWinners.length > 0 && (
+              <div className="space-y-4 mt-4">
+                {raffle.prizeWinners.map((winner, idx) => (
+                  <div key={idx} className="p-5 bg-amber-50 rounded-[1.5rem] border border-amber-200 animate-in zoom-in-95 duration-300">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Trophy className="w-4 h-4 text-amber-600" />
+                      <span className="text-xs font-black text-amber-800 uppercase tracking-widest">Ganador</span>
+                    </div>
+                    <h4 className="font-semibold text-slate-800 mb-1">
+                      {raffle.prizes && raffle.prizes[idx] ? raffle.prizes[idx].title : `Premio ${idx + 1}`}
+                    </h4>
+                    <p className="text-sm font-bold text-slate-900 truncate">{winner.name} ({winner.email})</p>
+                    <div className="flex items-center gap-2 mt-2">
+                       <span className="text-[10px] font-black text-slate-400 uppercase">Ticket:</span>
+                       <span className="bg-white px-2 py-0.5 rounded-lg border border-amber-200 text-amber-700 font-mono font-black text-xs">{winner.ticket}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
             

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { LayoutDashboard, LogOut, Plus, Ticket as TicketIcon, Users, Trophy, History, Settings, Loader2, AlertCircle, RefreshCw, Link as LinkIcon, Sliders } from 'lucide-react';
+import { LayoutDashboard, LogOut, Plus, Ticket as TicketIcon, Users, Trophy, History, Settings, Loader2, AlertCircle, RefreshCw, Link as LinkIcon, Sliders, Mail } from 'lucide-react';
 import { AdminRaffleList } from '@/components/admin/AdminRaffleList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
@@ -101,6 +101,9 @@ export default function AdminPage() {
             </Button>
             <Button asChild variant="ghost" className="text-slate-500 hover:text-primary rounded-xl font-bold gap-2">
               <Link href="/admin/settings"><Sliders className="w-5 h-5" /> Ajustes Web</Link>
+            </Button>
+            <Button asChild variant="ghost" className="text-slate-500 hover:text-primary rounded-xl font-bold gap-2">
+              <Link href="/admin/email-templates"><Mail className="w-5 h-5" /> Plantillas Email</Link>
             </Button>
             <Button onClick={handleLogout} variant="ghost" className="gap-2 text-slate-500 hover:text-red-600 rounded-xl font-bold">
               <LogOut className="w-5 h-5" /> Cerrar Sesión

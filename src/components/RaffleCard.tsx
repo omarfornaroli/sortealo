@@ -23,7 +23,7 @@ export default function RaffleCard({ raffle }: RaffleCardProps) {
     <Card className="overflow-hidden border-slate-200 bg-white shadow-md hover:shadow-2xl transition-all duration-500 group rounded-[2rem]">
       <div className="relative aspect-video overflow-hidden">
         <img 
-          src={raffle.imageUrl} 
+          src={raffle.prizes?.[0]?.imageUrl || '/images/placeholder.png'} 
           alt={raffle.name} 
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
         />

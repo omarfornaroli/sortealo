@@ -20,6 +20,7 @@ export default function SiteSettingsPage() {
     heroButtonText: '',
     sponsorsTitle: '',
     sponsors: [] as string[],
+    sponsorRotationInterval: 0,
     activeRafflesTitle: '',
     activeRafflesSubtitle: '',
     footerDescription: '',
@@ -47,6 +48,7 @@ export default function SiteSettingsPage() {
           heroButtonText: data.heroButtonText || '',
           sponsorsTitle: data.sponsorsTitle || '',
           sponsors: data.sponsors || [],
+          sponsorRotationInterval: data.sponsorRotationInterval || 10000,
           activeRafflesTitle: data.activeRafflesTitle || '',
           activeRafflesSubtitle: data.activeRafflesSubtitle || '',
           footerDescription: data.footerDescription || '',
@@ -227,6 +229,10 @@ export default function SiteSettingsPage() {
             <div className="space-y-2">
               <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Título de Sponsors</label>
               <Input value={formData.sponsorsTitle} onChange={e => setFormData({...formData, sponsorsTitle: e.target.value})} className="h-12 rounded-xl" />
+            </div>
+            <div className="space-y-2 mt-4">
+              <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Intervalo de Rotación (ms)</label>
+              <Input type="number" min="1000" value={formData.sponsorRotationInterval} onChange={e => setFormData({...formData, sponsorRotationInterval: Number(e.target.value)})} className="h-12 rounded-xl" />
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">

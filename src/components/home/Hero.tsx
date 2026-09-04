@@ -86,7 +86,7 @@ export function Hero({ featuredRaffle, siteSettings }: HeroProps) {
             {featuredRaffle ? (
               <>
                 <Image 
-                  src={featuredRaffle.imageUrl} 
+                  src={featuredRaffle.prizes?.[0]?.imageUrl || '/images/placeholder.png'} 
                   alt={featuredRaffle.name} 
                   fill 
                   className="object-cover group-hover:scale-105 transition-transform duration-1000"
