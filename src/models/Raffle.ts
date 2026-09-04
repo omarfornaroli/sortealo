@@ -1,4 +1,3 @@
-
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IParticipant {
@@ -10,6 +9,7 @@ export interface IParticipant {
   purchaseDate: Date;
   sellerId?: string;
   sellerName?: string;
+  acceptedTerms?: boolean;
 }
 
 export interface IRaffle extends Document {
@@ -51,7 +51,8 @@ const ParticipantSchema = new Schema({
   tickets: [{ type: String }],
   purchaseDate: { type: Date, default: Date.now },
   sellerId: { type: String },
-  sellerName: { type: String, default: 'Venta General' }
+  sellerName: { type: String, default: 'Venta General' },
+  acceptedTerms: { type: Boolean, default: false },
 }, { _id: false });
 
 const RaffleSchema: Schema = new Schema({
@@ -59,6 +60,7 @@ const RaffleSchema: Schema = new Schema({
   description: { type: String, required: true },
   // The main prize image is now optional; individual prize images are stored in the `prizes` array.
   imageUrl: { type: String, required: false },
+  winnersImageUrl: { type: String, required: false },
   participants: { type: [ParticipantSchema], default: [] },
   isFinished: { type: Boolean, default: false },
   isFeatured: { type: Boolean, default: false },

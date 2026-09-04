@@ -12,9 +12,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   try {
     const body = await req.json();
-    const { email, name, dni, phone, quantity, sellerCode } = body;
+    const { email, name, dni, phone, quantity, sellerCode, acceptedTerms } = body;
 
     // 1. Verificar existencia, finalización manual y fecha de expiración
+    if (!acceptedTerms) {
+      return NextResponse.json({ message: 'Debe aceptar los Términos y Condiciones' }, { status: 400 });
+    }
+
     const raffle = await Raffle.findById(id);
     if (!raffle) {
       return NextResponse.json({ message: 'Sorteo no encontrado' }, { status: 404 });
@@ -70,7 +74,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       phone: phone.trim(),
       tickets: generatedTickets,
       purchaseDate: new Date(),
-      ...sellerInfo
+      ...sellerInfo,
+      acceptedTerms: !!acceptedTerms
     };
 
     // 6. Actualización Atómica

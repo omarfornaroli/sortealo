@@ -19,6 +19,7 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
     name: '',
     description: '',
     imageUrl: '',
+    winnersImageUrl: '',
     isFinished: false,
     isFeatured: false,
     maxTickets: 0,
@@ -48,6 +49,7 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
           name: data.name,
           description: data.description,
           imageUrl: data.imageUrl,
+          winnersImageUrl: data.winnersImageUrl || '',
           isFinished: data.isFinished,
           isFeatured: data.isFeatured || false,
 
@@ -81,12 +83,38 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
       if (res.ok) {
         const data = await res.json();
         setFormData(prev => ({ ...prev, imageUrl: data.url }));
-        toast({ title: 'Imagen actualizada', description: 'La imagen del premio se subió correctamente.' });
+        toast({ title: 'Imagen actualizada', description: 'La imagen del sorteo se subió correctamente.' });
       } else {
         throw new Error('Upload failed');
       }
     } catch (error) {
       toast({ title: 'Error de carga', description: 'No se pudo subir la imagen.', variant: 'destructive' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Upload image for winners display
+  const handleWinnersImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const formDataUpload = new FormData();
+    formDataUpload.append('file', file);
+    try {
+      const res = await apiFetch('/api/upload', {
+        method: 'POST',
+        body: formDataUpload,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFormData(prev => ({ ...prev, winnersImageUrl: data.url }));
+        toast({ title: 'Imagen de ganadores', description: 'Imagen para la pantalla de ganadores cargada.' });
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      toast({ title: 'Error de carga', description: 'No se pudo subir la imagen de ganadores.', variant: 'destructive' });
     } finally {
       setUploading(false);
     }
@@ -360,6 +388,31 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
               <Button type="button" variant="outline" onClick={() => setFormData(prev => ({ ...prev, prizes: [...prev.prizes, { title: '', description: '', imageUrl: '' }] }))} className="w-full">
                 + Agregar Premio
               </Button>
+                {/* Winners Image Upload */}
+                <div className="mt-6 space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Imagen para pantalla de ganadores</label>
+                  <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl p-4 bg-slate-50 transition-colors hover:bg-slate-100 relative group">
+                    {formData.winnersImageUrl ? (
+                      <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-md">
+                        <img src={formData.winnersImageUrl} alt="Winners" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <label className="cursor-pointer bg-white text-slate-900 px-3 py-1 rounded-lg font-bold flex items-center gap-2">
+                            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} Cambiar Imagen
+                            <input type="file" accept="image/*" className="hidden" onChange={handleWinnersImageUpload} disabled={uploading} />
+                          </label>
+                        </div>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer flex flex-col items-center gap-2">
+                        <div className="p-2 bg-primary/10 rounded-full text-primary">
+                          {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Upload className="w-6 h-6" />}
+                        </div>
+                        <span className="text-xs text-slate-500">Subir Imagen de Ganadores</span>
+                        <input type="file" accept="image/*" className="hidden" onChange={handleWinnersImageUpload} disabled={uploading} />
+                      </label>
+                    )}
+                  </div>
+                </div>
             </div>
 
             <div className="flex items-center space-x-3 p-4 bg-slate-50 rounded-xl border border-slate-200">

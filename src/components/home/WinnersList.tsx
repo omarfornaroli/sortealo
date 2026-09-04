@@ -2,11 +2,27 @@
 "use client";
 
 import { Card, CardContent } from '@/components/ui/card';
-import { WINNERS } from '@/lib/data-mock';
+//
 import { Trophy, CheckCircle2 } from 'lucide-react';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import { apiFetch } from '@/lib/api';
 
 export function WinnersList() {
+  const [winners, setWinners] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiFetch('/api/winners')
+      .then(res => res.json())
+      .then(data => {
+        setWinners(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  if (loading) return <p className="text-center py-8">Cargando ganadores...</p>;
   return (
     <section className="py-24 bg-accent/30">
       <div className="container mx-auto px-4">
@@ -24,36 +40,49 @@ export function WinnersList() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {WINNERS.map((winner) => (
-            <Card key={winner.id} className="bg-background border-white/5 overflow-hidden group">
-              <div className="relative aspect-video">
-                <Image 
-                  src={winner.image} 
-                  alt={winner.winnerName} 
-                  fill 
-                  className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent opacity-60" />
-                <div className="absolute top-4 right-4">
-                  <div className="bg-primary/20 backdrop-blur-md border border-primary/30 rounded-full p-2">
-                    <CheckCircle2 className="text-primary w-5 h-5" />
+            {winners.map((winner) => (
+              <Card key={winner.id} className="bg-background border-white/5 overflow-hidden group">
+                <div className="relative aspect-video">
+                  {/* If a specific winners image is set, use it; otherwise fallback to prize carousel */}
+                  {winner.image && winner.image !== '/images/placeholder.png' ? (
+                    <Image
+                      src={winner.image}
+                      alt={winner.winnerName}
+                      fill
+                      className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                    />
+                  ) : (
+                    <div className="flex overflow-x-auto gap-2 h-full p-2 bg-gray-100">
+                      {winner.prizeImages && winner.prizeImages.length > 0 ? (
+                        winner.prizeImages.map((img: string, idx: number) => (
+                          <Image key={idx} src={img} alt={`Premio ${idx + 1}`} fill className="object-cover" />
+                        ))
+                      ) : (
+                        <Image src="/images/placeholder.png" alt="Placeholder" fill className="object-cover" />
+                      )}
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent opacity-60" />
+                  <div className="absolute top-4 right-4">
+                    <div className="bg-primary/20 backdrop-blur-md border border-primary/30 rounded-full p-2">
+                      <CheckCircle2 className="text-primary w-5 h-5" />
+                    </div>
                   </div>
                 </div>
-              </div>
-              <CardContent className="p-6 space-y-4">
-                <div>
-                  <h4 className="font-headline text-lg font-bold">{winner.raffleTitle}</h4>
-                  <p className="text-primary font-medium text-sm">Ganador: {winner.winnerName}</p>
-                </div>
-                <div className="flex justify-between items-center pt-4 border-t border-white/5 text-xs text-muted-foreground">
-                  <span>Número: {winner.ticketNumber}</span>
-                  <span>{new Date(winner.date).toLocaleDateString()}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                <CardContent className="p-6 space-y-4">
+                  <div>
+                    <h4 className="font-headline text-lg font-bold">{winner.raffleTitle}</h4>
+                    <p className="text-primary font-medium text-sm">Ganador: {winner.winnerName}</p>
+                  </div>
+                  <div className="flex justify-between items-center pt-4 border-t border-white/5 text-xs text-muted-foreground">
+                    <span>Número: {winner.ticketNumber}</span>
+                    <span>{new Date(winner.date).toLocaleDateString()}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
         </div>
-      </div>
-    </section>
+          </div>
+        </section>
   );
 }

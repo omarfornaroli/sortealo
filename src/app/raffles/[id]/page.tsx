@@ -36,6 +36,7 @@ function RaffleContent({ id }: { id: string }) {
     phone: '',
     email: ''
   });
+  const [termsAccepted, setTermsAccepted] = useState(false);
   
   const { toast } = useToast();
 
@@ -109,7 +110,7 @@ function RaffleContent({ id }: { id: string }) {
           raffleName: raffle.name,
           unitPrice: raffle.ticketPrice * quantity,
           quantity: 1,
-          user: { ...formData, sellerCode }
+          user: { ...formData, sellerCode, acceptedTerms: !!termsAccepted }
         }),
       });
 
@@ -323,9 +324,20 @@ function RaffleContent({ id }: { id: string }) {
                           <span className="text-3xl font-black text-primary">${raffle.ticketOptions?.find(o => o.quantity === quantity)?.price || 0}</span>
                         </div>
 
+                        <div className="flex items-center mb-4">
+                          <input
+                            type="checkbox"
+                            id="terms"
+                            checked={termsAccepted}
+                            onChange={e => setTermsAccepted(e.target.checked)}
+                            className="h-4 w-4 text-primary border-gray-300 rounded mr-2"
+                          />
+                          <label htmlFor="terms" className="text-sm text-muted-foreground">He leído y acepto los <Link href="/terminos_y_condiciones_sortealo.pdf" target="_blank" rel="noopener noreferrer" className="hover:text-primary underline">Términos y Condiciones</Link></label>
+                        </div>
+
                         <Button 
                           type="submit"
-                          disabled={purchasing}
+                          disabled={purchasing || !termsAccepted}
                           className="w-full h-20 bg-[#009EE3] hover:bg-[#0081B9] text-white text-xl font-black rounded-2xl"
                         >
                           {purchasing ? <Loader2 className="animate-spin w-6 h-6" /> : <CreditCard className="w-6 h-6" />}

@@ -3,7 +3,7 @@
 import { IRaffle } from '@/models/Raffle';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-import { Ticket, ArrowRight, Calendar } from 'lucide-react';
+import { Ticket, ArrowRight, Calendar, Trophy } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 

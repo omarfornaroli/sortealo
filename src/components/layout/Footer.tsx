@@ -44,10 +44,10 @@ export function Footer({ settings }: { settings?: any }) {
           <div>
             <h4 className="font-headline text-lg font-bold mb-6">Legal</h4>
             <ul className="space-y-4 text-sm text-muted-foreground">
-              <li><Link href="#" className="hover:text-primary transition-colors">Términos y Condiciones</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-colors">Política de Privacidad</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-colors">Bases del Sorteo</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-colors">Defensa al Consumidor</Link></li>
+              <li><Link href="/terminos_y_condiciones_sortealo.pdf" className="hover:text-primary transition-colors" target="_blank" rel="noopener noreferrer">Términos y Condiciones</Link></li>
+              <li><Link href="/politicas_de_privacidad_sortealo.pdf" className="hover:text-primary transition-colors">Política de Privacidad</Link></li>
+
+
             </ul>
           </div>
 
