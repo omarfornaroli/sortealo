@@ -2,8 +2,11 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ISeller extends Document {
-  name: string;
-  code: string; // Código único para el link (slug)
+  firstName: string;
+  lastName: string;
+  dni: string;
+  name: string; // Nombre completo (compatibilidad)
+  code: string; // UUID único para el link
   email?: string;
   phone?: string;
   active: boolean;
@@ -11,7 +14,10 @@ export interface ISeller extends Document {
 }
 
 const SellerSchema: Schema = new Schema({
-  name: { type: String, required: true },
+  firstName: { type: String, required: true },
+  lastName: { type: String, required: true },
+  dni: { type: String, required: true },
+  name: { type: String },
   code: { type: String, required: true, unique: true },
   email: { type: String },
   phone: { type: String },

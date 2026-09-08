@@ -27,9 +27,14 @@ import { useToast } from '@/hooks/use-toast';
 export default function ParticipantsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [raffle, setRaffle] = useState<any>(null);
+  const [sellers, setSellers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
+  const [filterDate, setFilterDate] = useState('');
+  const [filterTicket, setFilterTicket] = useState('');
+  const [filterSeller, setFilterSeller] = useState('');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const { toast } = useToast();
 
   const loadParticipants = async () => {
@@ -51,12 +56,55 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
     loadParticipants();
   }, [id]);
 
-  const filteredParticipants = raffle?.participants?.filter((p: any) => 
-    p.email.toLowerCase().includes(search.toLowerCase()) || 
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    (p.sellerName && p.sellerName.toLowerCase().includes(search.toLowerCase())) ||
-    (p.dni && p.dni.toString().includes(search))
-  ) || [];
+  useEffect(() => {
+    const loadSellers = async () => {
+      try {
+        const res = await apiFetch('/api/sellers');
+        if (res.ok) {
+          const data = await res.json();
+          setSellers(data);
+        }
+      } catch (e) {
+        console.error('Error loading sellers', e);
+      }
+    };
+    loadSellers();
+  }, []);
+
+  const filteredParticipants = raffle?.participants?.filter((p: any) => {
+    let matches = true;
+    if (search) {
+      matches = matches && (
+        p.email.toLowerCase().includes(search.toLowerCase()) ||
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        (p.sellerName && p.sellerName.toLowerCase().includes(search.toLowerCase())) ||
+        (p.dni && p.dni.toString().includes(search))
+      );
+    }
+    if (filterDate) {
+      const dateStr = new Date(p.purchaseDate).toISOString().split('T')[0];
+      matches = matches && dateStr === filterDate;
+    }
+    if (filterTicket) {
+      matches = matches && p.tickets?.some((t: string) => t.includes(filterTicket));
+    }
+    if (filterSeller) {
+      matches = matches && p.sellerName === filterSeller;
+    }
+    return matches;
+  }) || [];
+
+  // Compute ticket counts per seller for the table
+  const sellerStats = raffle?.participants?.reduce((acc: any, p: any) => {
+    const key = p.sellerName || 'Venta General';
+    acc[key] = (acc[key] || 0) + (p.tickets?.length || 0);
+    return acc;
+  }, {} as Record<string, number>) || {};
+
+  const sellerTableData = Object.entries(sellerStats)
+    .filter(([seller]) => !filterSeller || seller === filterSeller)
+    .map(([seller, count]) => ({ seller, count }))
+    .sort((a, b) => sortOrder === 'asc' ? a.count - b.count : b.count - a.count);
 
   const handleExportCSV = () => {
     if (!raffle?.participants?.length) return;
@@ -112,6 +160,33 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
               <p className="font-black text-slate-900 text-4xl">{raffle.participants?.length || 0}</p>
             </div>
           </div>
+          {/* Tabla de tickets por vendedor */}
+          <div className="mt-8">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50">
+                  <th className="px-4 py-2">Vendedor</th>
+                  <th className="px-4 py-2 flex items-center justify-between">
+                    <span>Tickets Vendidos</span>
+                    <button
+                      onClick={() => setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))}
+                      className="text-sm text-slate-500"
+                    >
+                      {sortOrder === 'asc' ? '↑' : '↓'}
+                    </button>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {sellerTableData.map(({ seller, count }) => (
+                  <tr key={seller} className="border-t border-slate-200">
+                    <td className="px-4 py-2">{seller}</td>
+                    <td className="px-4 py-2">{count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -123,6 +198,20 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+      </div>
+      <div className="flex flex-wrap gap-4 mb-8">
+        <Input type="date" placeholder="Fecha de compra" value={filterDate} onChange={e => setFilterDate(e.target.value)} className="h-16 rounded-[1.5rem] border-slate-200 text-lg" />
+        <Input placeholder="Número de ticket" value={filterTicket} onChange={e => setFilterTicket(e.target.value)} className="h-16 rounded-[1.5rem] border-slate-200 text-lg" />
+        <select
+          value={filterSeller}
+          onChange={e => setFilterSeller(e.target.value)}
+          className="h-16 rounded-[1.5rem] border-slate-200 text-lg w-full"
+        >
+          <option value="">Todos</option>
+          {sellers.map((s: any) => (
+            <option key={s._id} value={s.name}>{s.name}</option>
+          ))}
+        </select>
       </div>
 
       <Card className="rounded-[2.5rem] border-slate-200 overflow-hidden shadow-2xl bg-white">

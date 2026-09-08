@@ -36,6 +36,9 @@ export default function SellersPage() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [dni, setDni] = useState('');
   const [selectedRaffle, setSelectedRaffle] = useState<string>('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -63,16 +66,18 @@ export default function SellersPage() {
 
   const handleCreateSeller = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name) return;
+    if (!firstName || !lastName || !dni) return;
     setCreating(true);
     try {
       const res = await apiFetch('/api/sellers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ firstName, lastName, dni }),
       });
       if (res.ok) {
-        setName('');
+        setFirstName('');
+        setLastName('');
+        setDni('');
         loadData();
         toast({ title: 'Vendedor creado', description: 'Se ha registrado el nuevo vendedor.' });
       } else {
@@ -128,22 +133,42 @@ export default function SellersPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8">
-              <form onSubmit={handleCreateSeller} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Nombre del Vendedor</label>
-                  <Input 
-                    placeholder="Ej: Marcos Pérez" 
-                    className="h-14 rounded-2xl"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button className="w-full h-14 rounded-2xl font-bold text-lg" disabled={creating}>
-                  {creating ? <Loader2 className="animate-spin" /> : <Plus className="w-5 h-5" />}
-                  Registrar Vendedor
-                </Button>
-              </form>
+                <form onSubmit={handleCreateSeller} className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Primer Nombre</label>
+                    <Input 
+                      placeholder="Ej: Marcos" 
+                      className="h-14 rounded-2xl"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Apellido</label>
+                    <Input 
+                      placeholder="Ej: Pérez" 
+                      className="h-14 rounded-2xl"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase text-slate-400 tracking-widest">DNI</label>
+                    <Input 
+                      placeholder="Ej: 12345678" 
+                      className="h-14 rounded-2xl"
+                      value={dni}
+                      onChange={(e) => setDni(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button className="w-full h-14 rounded-2xl font-bold text-lg" disabled={creating}>
+                    {creating ? <Loader2 className="animate-spin" /> : <Plus className="w-5 h-5" />}
+                    Registrar Vendedor
+                  </Button>
+                </form>
             </CardContent>
           </Card>
 
@@ -184,9 +209,14 @@ export default function SellersPage() {
                       </div>
                       <div>
                         <h3 className="text-xl font-black text-slate-900 leading-none mb-2">{seller.name}</h3>
-                        <Badge variant="outline" className="text-[10px] uppercase font-black tracking-widest text-slate-400">
-                          Cod: {seller.code}
-                        </Badge>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          <Badge variant="outline" className="text-[10px] uppercase font-black tracking-widest text-slate-400">
+                            Cod: {seller.code}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] uppercase font-black tracking-widest text-slate-400">
+                            DNI: {seller.dni}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
                     
