@@ -71,7 +71,7 @@ export function Footer({ settings }: { settings?: any }) {
         </div>
 
         <div className="pt-8 border-t border-white/5 text-center text-xs text-muted-foreground">
-          <p>© {new Date().getFullYear()} {settings?.siteName || 'Sortealo'} S.R.L. Todos los derechos reservados.</p>
+          <p>© {new Date().getFullYear()} Posify Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>

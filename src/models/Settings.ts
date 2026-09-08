@@ -15,9 +15,13 @@ export interface ISettings extends Document {
   contactEmail: string;
   contactPhone: string;
   contactAddress: string;
+  navbarBackground: string;
+  navbarTextColor: string;
 }
 
 const SettingsSchema: Schema = new Schema({
+  navbarBackground: { type: String, default: '#bbbbbbff' },
+  navbarTextColor: { type: String, default: '#000000' },
   siteName: { type: String, default: 'Sortealo' },
   heroBackgroundImageUrl: {
     type: String,

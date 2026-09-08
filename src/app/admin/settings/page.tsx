@@ -27,8 +27,10 @@ export default function SiteSettingsPage() {
     contactEmail: '',
     contactPhone: '',
     contactAddress: '',
+    navbarBackground: '',
+    navbarTextColor: '',
   });
-  
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -55,6 +57,8 @@ export default function SiteSettingsPage() {
           contactEmail: data.contactEmail || '',
           contactPhone: data.contactPhone || '',
           contactAddress: data.contactAddress || '',
+          navbarBackground: data.navbarBackground || '#bbbbbbff',
+          navbarTextColor: data.navbarTextColor || '#000000',
         });
         setLoading(false);
       })
@@ -179,22 +183,22 @@ export default function SiteSettingsPage() {
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Texto del Badge (Badge Text)</label>
-                <Input value={formData.heroBadgeText} onChange={e => setFormData({...formData, heroBadgeText: e.target.value})} className="h-12 rounded-xl" />
+                <Input value={formData.heroBadgeText} onChange={e => setFormData({ ...formData, heroBadgeText: e.target.value })} className="h-12 rounded-xl" />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Texto del Botón</label>
-                <Input value={formData.heroButtonText} onChange={e => setFormData({...formData, heroButtonText: e.target.value})} className="h-12 rounded-xl" />
+                <Input value={formData.heroButtonText} onChange={e => setFormData({ ...formData, heroButtonText: e.target.value })} className="h-12 rounded-xl" />
               </div>
             </div>
 
             <div className="space-y-2">
               <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Título Principal (H1)</label>
-              <Input value={formData.heroTitle} onChange={e => setFormData({...formData, heroTitle: e.target.value})} className="h-14 text-xl font-bold rounded-xl" />
+              <Input value={formData.heroTitle} onChange={e => setFormData({ ...formData, heroTitle: e.target.value })} className="h-14 text-xl font-bold rounded-xl" />
             </div>
 
             <div className="space-y-2">
               <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Descripción del Hero</label>
-              <Textarea value={formData.heroDescription} onChange={e => setFormData({...formData, heroDescription: e.target.value})} className="min-h-[100px] rounded-xl" />
+              <Textarea value={formData.heroDescription} onChange={e => setFormData({ ...formData, heroDescription: e.target.value })} className="min-h-[100px] rounded-xl" />
             </div>
           </CardContent>
         </Card>
@@ -209,11 +213,11 @@ export default function SiteSettingsPage() {
           <CardContent className="p-8 space-y-6">
             <div className="space-y-2">
               <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Título de la Sección</label>
-              <Input value={formData.activeRafflesTitle} onChange={e => setFormData({...formData, activeRafflesTitle: e.target.value})} className="h-12 rounded-xl" />
+              <Input value={formData.activeRafflesTitle} onChange={e => setFormData({ ...formData, activeRafflesTitle: e.target.value })} className="h-12 rounded-xl" />
             </div>
             <div className="space-y-2">
               <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Subtítulo explicativo</label>
-              <Textarea value={formData.activeRafflesSubtitle} onChange={e => setFormData({...formData, activeRafflesSubtitle: e.target.value})} className="min-h-[80px] rounded-xl" />
+              <Textarea value={formData.activeRafflesSubtitle} onChange={e => setFormData({ ...formData, activeRafflesSubtitle: e.target.value })} className="min-h-[80px] rounded-xl" />
             </div>
           </CardContent>
         </Card>
@@ -228,13 +232,13 @@ export default function SiteSettingsPage() {
           <CardContent className="p-8 space-y-8">
             <div className="space-y-2">
               <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Título de Sponsors</label>
-              <Input value={formData.sponsorsTitle} onChange={e => setFormData({...formData, sponsorsTitle: e.target.value})} className="h-12 rounded-xl" />
+              <Input value={formData.sponsorsTitle} onChange={e => setFormData({ ...formData, sponsorsTitle: e.target.value })} className="h-12 rounded-xl" />
             </div>
             <div className="space-y-2 mt-4">
               <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Intervalo de Rotación (ms)</label>
-              <Input type="number" min="1000" value={formData.sponsorRotationInterval} onChange={e => setFormData({...formData, sponsorRotationInterval: Number(e.target.value)})} className="h-12 rounded-xl" />
+              <Input type="number" min="1000" value={formData.sponsorRotationInterval} onChange={e => setFormData({ ...formData, sponsorRotationInterval: Number(e.target.value) })} className="h-12 rounded-xl" />
             </div>
-            
+
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
               {formData.sponsors.map((url, i) => (
                 <div key={i} className="relative group aspect-square rounded-2xl border border-slate-100 bg-slate-50 p-4 flex items-center justify-center">
@@ -263,21 +267,32 @@ export default function SiteSettingsPage() {
           <CardContent className="p-8 space-y-8">
             <div className="space-y-2">
               <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Descripción del Footer</label>
-              <Textarea value={formData.footerDescription} onChange={e => setFormData({...formData, footerDescription: e.target.value})} className="min-h-[100px] rounded-xl" />
+              <Textarea value={formData.footerDescription} onChange={e => setFormData({ ...formData, footerDescription: e.target.value })} className="min-h-[100px] rounded-xl" />
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><Mail className="w-3 h-3" /> Email</label>
-                <Input value={formData.contactEmail} onChange={e => setFormData({...formData, contactEmail: e.target.value})} className="h-12 rounded-xl" />
+                <Input value={formData.contactEmail} onChange={e => setFormData({ ...formData, contactEmail: e.target.value })} className="h-12 rounded-xl" />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><Phone className="w-3 h-3" /> Teléfono</label>
-                <Input value={formData.contactPhone} onChange={e => setFormData({...formData, contactPhone: e.target.value})} className="h-12 rounded-xl" />
+                <Input value={formData.contactPhone} onChange={e => setFormData({ ...formData, contactPhone: e.target.value })} className="h-12 rounded-xl" />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase text-slate-400 tracking-widest flex items-center gap-2"><MapPin className="w-3 h-3" /> Dirección</label>
-                <Input value={formData.contactAddress} onChange={e => setFormData({...formData, contactAddress: e.target.value})} className="h-12 rounded-xl" />
+                <Input value={formData.contactAddress} onChange={e => setFormData({ ...formData, contactAddress: e.target.value })} className="h-12 rounded-xl" />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 pt-8 border-t border-slate-100">
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Color de Fondo de la Barra</label>
+                <Input type="color" value={formData.navbarBackground} onChange={e => setFormData({ ...formData, navbarBackground: e.target.value })} className="h-12 rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase text-slate-400 tracking-widest">Color del Texto de la Barra</label>
+                <Input type="color" value={formData.navbarTextColor} onChange={e => setFormData({ ...formData, navbarTextColor: e.target.value })} className="h-12 rounded-xl" />
               </div>
             </div>
           </CardContent>

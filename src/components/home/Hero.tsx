@@ -17,29 +17,29 @@ export function Hero({ featuredRaffle, siteSettings }: HeroProps) {
   return (
     <section className="relative min-h-[95vh] flex items-center pt-20 overflow-hidden bg-slate-950">
       <div className="absolute inset-0 z-0">
-        <Image 
-          src={bgImage} 
-          alt="Fondo Principal de Sortealo" 
-          fill 
+        <Image
+          src={bgImage}
+          alt="Fondo Principal de Sortealo"
+          fill
           className="object-cover"
           priority
         />
       </div>
 
-      <div className="container mx-auto px-4 relative z-10 grid lg:grid-cols-2 gap-12 items-center">
+      <div className="container mx-auto py-6 px-4 relative z-10 grid lg:grid-cols-2 gap-12 items-center">
         <div className="space-y-10 animate-fade-in-up">
           <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-black/40 border border-white/20 text-white text-xs font-black uppercase tracking-[0.2em] backdrop-blur-md shadow-xl">
             <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
             {siteSettings?.heroBadgeText || 'Sorteos de Élite en Argentina'}
           </div>
-          
-          <h1 
+
+          <h1
             className="text-6xl lg:text-8xl font-headline font-bold leading-none tracking-tighter text-white drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]"
           >
             {siteSettings?.heroTitle || 'Tu destino de lujo hoy.'}
           </h1>
-          
-          <p 
+
+          <p
             className="text-xl max-w-lg leading-relaxed font-bold text-white drop-shadow-[0_4px_10px_rgba(0,0,0,0.9)]"
           >
             {siteSettings?.heroDescription || 'Participa por los mejores premios con transparencia total.'}
@@ -64,31 +64,21 @@ export function Hero({ featuredRaffle, siteSettings }: HeroProps) {
               <ShieldCheck className="text-primary w-6 h-6" />
               <span className="text-sm font-black uppercase tracking-widest">Pagos 100% Seguros</span>
             </div>
-            <div className="flex items-center gap-3 text-white drop-shadow-md">
-              <div className="flex -space-x-2">
-                {[1,2,3].map(i => (
-                  <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-950 bg-slate-800 flex items-center justify-center overflow-hidden">
-                    <img src={`https://picsum.photos/seed/${i}/32/32`} alt="user" />
-                  </div>
-                ))}
-              </div>
-              <span className="text-sm font-bold text-white">+10k Participantes</span>
-            </div>
           </div>
         </div>
 
         <div className="relative aspect-square lg:aspect-auto lg:h-[650px] w-full animate-fade-in-up delay-150">
           <div className="absolute -inset-10 bg-primary/30 blur-[100px] rounded-full opacity-20 animate-pulse" />
-          <Link 
-            href={featuredRaffle ? `/raffles/${featuredRaffle._id}` : '#raffles'} 
+          <Link
+            href={featuredRaffle ? `/raffles/${featuredRaffle._id}` : '#raffles'}
             className="block relative h-full w-full rounded-[4rem] overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.6)] group"
           >
             {featuredRaffle ? (
               <>
-                <Image 
-                  src={featuredRaffle.prizes?.[0]?.imageUrl || '/images/placeholder.png'} 
-                  alt={featuredRaffle.name} 
-                  fill 
+                <Image
+                  src={featuredRaffle.prizes?.[0]?.imageUrl || '/images/placeholder.png'}
+                  alt={featuredRaffle.name}
+                  fill
                   className="object-cover group-hover:scale-105 transition-transform duration-1000"
                 />
                 <div className="absolute bottom-0 inset-x-0 p-12 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent text-left">

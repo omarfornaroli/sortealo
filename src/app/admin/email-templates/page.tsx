@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
 
 // Dynamically import ReactQuill to prevent SSR window/document issues in Next.js
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
@@ -64,7 +65,7 @@ export default function EmailTemplatesAdmin() {
   ];
 
   useEffect(() => {
-    fetch('/api/admin/email-templates')
+    apiFetch('/api/admin/email-templates')
       .then(res => res.json())
       .then(data => {
         const updated = {
@@ -102,7 +103,7 @@ export default function EmailTemplatesAdmin() {
       purchaseEmailSubject: templates.purchaseEmailSubject || defaultPurchaseSubject,
       purchaseEmailBody: templates.purchaseEmailBody || defaultPurchaseBody
     };
-    await fetch('/api/admin/email-templates', {
+    await apiFetch('/api/admin/email-templates', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

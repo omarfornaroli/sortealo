@@ -7,6 +7,7 @@ export interface IParticipant {
   phone: string;
   tickets: string[];
   purchaseDate: Date;
+  external_reference?: string;
   sellerId?: string;
   sellerName?: string;
   acceptedTerms?: boolean;
@@ -50,6 +51,7 @@ const ParticipantSchema = new Schema({
   phone: { type: String, required: true },
   tickets: [{ type: String }],
   purchaseDate: { type: Date, default: Date.now },
+  external_reference: { type: String },
   sellerId: { type: String },
   sellerName: { type: String, default: 'Venta General' },
   acceptedTerms: { type: Boolean, default: false },

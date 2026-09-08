@@ -94,6 +94,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     // 7. Enviar Email
     try {
+      console.log(`[participate] Iniciando envío de email a ${email} para sorteo ${updatedRaffle.name} (${generatedTickets.length} tickets)`);
       // Load email templates from Settings
       const settings = await Settings.findOne().lean();
       const subjectTemplate = settings?.purchaseEmailSubject || `Tus números para el sorteo: ${updatedRaffle.name}`;
@@ -110,19 +111,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           .replace(/{{\s*quantity\s*}}/g, String(quantity))
           .replace(/{{\s*raffleName\s*}}/g, updatedRaffle.name)
           .replace(/{{\s*ticketsHtml\s*}}/g, ticketsHtml)
-          .replace(/{{\s*winnerTicket\s*}}/g, '') // not used here
           .replace(/{{\s*setupLink\s*}}/g, '');
 
       const subject = replace(subjectTemplate);
       const html = replace(bodyTemplate);
 
+      console.log(`[participate] Enviando email con asunto: "${subject}"`);
       await sendEmail({
         to: email.toLowerCase().trim(),
         subject,
         html
       });
-    } catch (emailErr) {
-      console.error('Error enviando email:', emailErr);
+      console.log(`[participate] Email enviado correctamente a ${email}`);
+    } catch (emailErr: any) {
+      console.error(`[participate] Error enviando email a ${email}:`, emailErr?.message || emailErr, emailErr?.stack);
     }
 
     return NextResponse.json({

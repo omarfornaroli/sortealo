@@ -74,7 +74,7 @@ function RaffleContent({ id }: { id: string }) {
       const res = await apiFetch(`/api/raffles/${id}/participate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, quantity, sellerCode }),
+        body: JSON.stringify({ ...formData, quantity, sellerCode, acceptedTerms: termsAccepted }),
       });
 
       const data = await res.json();
@@ -102,14 +102,18 @@ function RaffleContent({ id }: { id: string }) {
 
     setPurchasing(true);
     try {
+      // Determine price based on selected ticket option
+      const selectedOption = raffle.ticketOptions?.find((o: any) => o.quantity === quantity);
+      const price = selectedOption?.price ?? raffle.ticketPrice * quantity;
       const res = await apiFetch('/api/mercadopago/preference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           raffleId: id,
           raffleName: raffle.name,
-          unitPrice: raffle.ticketPrice * quantity,
-          quantity: 1,
+          unitPrice: price,
+          // Quantity is set to 1 for MercadoPago item; actual ticket count is tracked in metadata
+          quantity,
           user: { ...formData, sellerCode, acceptedTerms: !!termsAccepted }
         }),
       });
@@ -332,7 +336,7 @@ function RaffleContent({ id }: { id: string }) {
                             onChange={e => setTermsAccepted(e.target.checked)}
                             className="h-4 w-4 text-primary border-gray-300 rounded mr-2"
                           />
-                          <label htmlFor="terms" className="text-sm text-muted-foreground">He leído y acepto los <Link href="/terminos_y_condiciones_sortealo.pdf" target="_blank" rel="noopener noreferrer" className="hover:text-primary underline">Términos y Condiciones</Link></label>
+                          <label htmlFor="terms" className="text-sm text-muted-foreground">He leído y acepto los <Link href={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/terminos_y_condiciones_sortealo.pdf`} target="_blank" rel="noopener noreferrer" className="hover:text-primary underline">Términos y Condiciones</Link></label>
                         </div>
 
                         <Button 
@@ -343,6 +347,8 @@ function RaffleContent({ id }: { id: string }) {
                           {purchasing ? <Loader2 className="animate-spin w-6 h-6" /> : <CreditCard className="w-6 h-6" />}
                           PAGAR CON MERCADO PAGO
                         </Button>
+
+                       
 
                         
                       </div>

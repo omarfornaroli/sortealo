@@ -4,7 +4,7 @@
  */
 export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
   const apiKey = process.env.ENVIALOSIMPLE_API_KEY;
-  
+
   if (!apiKey) {
     console.warn('ENVIALOSIMPLE_API_KEY no configurada en el entorno.');
     return false;
@@ -25,6 +25,12 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
   console.log('---------------------------------');
 
   try {
+    // Diagnóstico de API key (sin exponer el valor completo)
+    console.log('[email] API key presente:', !!apiKey);
+    console.log('[email] API key longitud:', apiKey?.length);
+    console.log('[email] API key prefijo:', apiKey);
+    console.log('[email] Authorization header:', `Bearer ${apiKey?.substring(0, 8)}...`);
+
     const response = await fetch('https://api.envialosimple.email/api/v1/mail/send', {
       method: 'POST',
       headers: {
@@ -43,7 +49,7 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
     } catch (e) {
       responseData = rawResponse;
     }
-    
+
     if (!response.ok) {
       console.error('Error detectado en EnvialoSimple API:', {
         status: response.status,
