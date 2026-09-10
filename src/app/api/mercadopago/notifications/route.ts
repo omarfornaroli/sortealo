@@ -53,21 +53,21 @@ export async function POST(req: NextRequest) {
 
         console.log('[notifications] paymentId:', paymentId);
 
-        // 1. Consultar el detalle del pago a la API de Mercado Pago
-        // const mpResponse = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-        //     headers: {
-        //         Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
-        //     },
-        // });
+        1. Consultar el detalle del pago a la API de Mercado Pago
+        const mpResponse = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+            headers: {
+                Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
+            },
+        });
 
-        const mpResponse = {
-            ok: true,
-            status: "",
-            json: async () => ({
-                status: 'approved',
-                external_reference: "7f1ba110-c159-46fd-b027-8d88f5616ccc"
-            }),
-        }
+        // const mpResponse = {
+        //     ok: true,
+        //     status: "",
+        //     json: async () => ({
+        //         status: 'approved',
+        //         external_reference: "7f1ba110-c159-46fd-b027-8d88f5616ccc"
+        //     }),
+        // }
 
         if (!mpResponse.ok) {
             console.error('[notifications] Error fetching payment from Mercado Pago:', mpResponse.status);
