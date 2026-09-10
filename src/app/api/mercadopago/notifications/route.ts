@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
 
         console.log('[notifications] paymentId:', paymentId);
 
-        1. Consultar el detalle del pago a la API de Mercado Pago
+        // 1. Consultar el detalle del pago a la API de Mercado Pago
         const mpResponse = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
             headers: {
                 Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
