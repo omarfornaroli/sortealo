@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
 
     console.log('[preference] Datos recibidos - user:', JSON.stringify(user));
     console.log('[preference] sellerCode en user:', user?.sellerCode);
+    console.log('[preference] ticketOption:', ticketOption);
 
     if (!process.env.MP_ACCESS_TOKEN) {
       return NextResponse.json({ message: 'Mercado Pago access token not configured' }, { status: 500 });
