@@ -23,7 +23,7 @@ export interface IRaffle extends Document {
   featuredSubtitleColor?: string;
   featuredBackgroundImageUrl?: string;
   ticketPrice: number;
-  ticketOptions?: { quantity: number; price: number }[];
+  ticketOptions?: { quantity: number; price: number; description?: string }[];
   maxTickets: number;
   soldTickets: number;
   drawDate: Date;
@@ -74,6 +74,7 @@ const RaffleSchema: Schema = new Schema({
   ticketOptions: [{
     quantity: { type: Number, required: true },
     price: { type: Number, required: true },
+    description: { type: String },
   }],
   maxTickets: { type: Number, default: 0 },
   soldTickets: { type: Number, default: 0 },
