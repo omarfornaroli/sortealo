@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, use } from 'react';
@@ -20,14 +19,13 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
     description: '',
     imageUrl: '',
     winnersImageUrl: '',
+    whatsappImageUrl: '',
     isFinished: false,
     isFeatured: false,
     maxTickets: 0,
-    ticketOptions: [] as { quantity: number; price: number }[],
+    ticketOptions: [] as { quantity: number; price: number; description?: string }[],
     drawDate: '',
-    // New field for multiple prizes
     prizes: [] as { title: string; description: string; imageUrl: string }[],
-
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -50,11 +48,11 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
           description: data.description,
           imageUrl: data.imageUrl,
           winnersImageUrl: data.winnersImageUrl || '',
+          whatsappImageUrl: data.whatsappImageUrl || '',
           isFinished: data.isFinished,
           isFeatured: data.isFeatured || false,
-
           maxTickets: data.maxTickets || 0,
-          ticketOptions: data.ticketOptions ? data.ticketOptions.map((opt: any) => ({ quantity: opt.quantity, price: opt.price })) : [],
+          ticketOptions: data.ticketOptions ? data.ticketOptions.map((opt: any) => ({ quantity: opt.quantity, price: opt.price, description: opt.description })) : [],
           drawDate: data.drawDate ? new Date(data.drawDate).toISOString().slice(0, 16) : '',
           prizes: data.prizes ? data.prizes.map((p: any) => ({ title: p.title, description: p.description, imageUrl: p.imageUrl })) : [],
         });
@@ -94,7 +92,31 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
     }
   };
 
-  // Upload image for winners display
+  const handleWhatsAppImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const formDataUpload = new FormData();
+    formDataUpload.append('file', file);
+    try {
+      const res = await apiFetch('/api/upload', {
+        method: 'POST',
+        body: formDataUpload,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFormData(prev => ({ ...prev, whatsappImageUrl: data.url }));
+        toast({ title: 'Imagen actualizada', description: 'La imagen para WhatsApp se subió correctamente.' });
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      toast({ title: 'Error de carga', description: 'No se pudo subir la imagen para WhatsApp.', variant: 'destructive' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleWinnersImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -120,7 +142,6 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
     }
   };
 
-  // Upload image for a specific prize
   const handlePrizeImageUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -159,7 +180,6 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
 
     try {
       const token = localStorage.getItem('adminToken');
-      // Validate prize images before sending
       for (const [i, p] of formData.prizes.entries()) {
         if (!p.imageUrl) {
           toast({ title: 'Atención', description: `Premio ${i + 1} necesita una imagen.`, variant: 'destructive' });
@@ -168,13 +188,22 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
         }
       }
 
+      const processedTicketOptions = formData.ticketOptions.map((opt, index) => ({
+        quantity: opt.quantity,
+        price: opt.price,
+        description: opt.description || `Curso #${index + 1}`
+      }));
+
       const res = await apiFetch(`/api/raffles/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          ticketOptions: processedTicketOptions
+        }),
       });
 
       if (res.ok) {
@@ -229,10 +258,8 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4"></div>
 
-
-              </div>
               {/* Ticket Options */}
               <div className="space-y-4 p-4 bg-primary/5 rounded-[2rem] border border-primary/10">
                 <h3 className="font-bold text-primary uppercase tracking-tighter text-sm mb-2">Opciones de Ticket</h3>
@@ -270,12 +297,26 @@ export default function EditRafflePage({ params }: { params: Promise<{ id: strin
                         required
                       />
                     </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Descripción para Mercado Pago</label>
+                      <Input
+                        type="text"
+                        placeholder="Ej: Curso de Cocina Básico"
+                        value={opt.description || ''}
+                        onChange={(e) => setFormData(prev => {
+                          const newOpts = [...prev.ticketOptions];
+                          newOpts[idx] = { ...newOpts[idx], description: e.target.value };
+                          return { ...prev, ticketOptions: newOpts };
+                        })}
+                        className="h-12 rounded-xl"
+                      />
+                    </div>
                     <Button type="button" variant="ghost" className="h-10 w-10" onClick={() => setFormData(prev => ({ ...prev, ticketOptions: prev.ticketOptions.filter((_, i) => i !== idx) }))}>
                       ✕
                     </Button>
                   </div>
                 ))}
-                <Button type="button" variant="outline" onClick={() => setFormData(prev => ({ ...prev, ticketOptions: [...prev.ticketOptions, { quantity: 0, price: 0 }] }))} className="w-full">
+                <Button type="button" variant="outline" onClick={() => setFormData(prev => ({ ...prev, ticketOptions: [...prev.ticketOptions, { quantity: 0, price: 0, description: '' }] }))} className="w-full">
                   + Agregar Opción
                 </Button>
               </div>

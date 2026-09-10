@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -19,10 +18,9 @@ export default function NewRafflePage() {
     description: '',
     ticketPrice: 500,
     maxTickets: 1000,
-    ticketOptions: [] as { quantity: number; price: number }[],
+    ticketOptions: [] as { quantity: number; price: number; description?: string }[],
     drawDate: '',
     isFeatured: false,
-    // New field for multiple prizes
     prizes: [] as { title: string; description: string; imageUrl: string }[],
   });
   const [loading, setLoading] = useState(false);
@@ -37,9 +35,6 @@ export default function NewRafflePage() {
     }
   }, []);
 
-  // Removed main prize image upload handler as main image is no longer required.
-
-  // Handle image upload for a specific prize index
   const handlePrizeImageUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -74,8 +69,6 @@ export default function NewRafflePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Removed validation for main prize image as it is no longer required.
-    // Ensure each prize has an image
     for (const [i, p] of formData.prizes.entries()) {
       if (!p.imageUrl) {
         toast({ title: 'Atención', description: `Premio ${i + 1} necesita una imagen.`, variant: 'destructive' });
@@ -86,13 +79,22 @@ export default function NewRafflePage() {
 
     try {
       const token = localStorage.getItem('adminToken');
+      const processedTicketOptions = formData.ticketOptions.map((opt, index) => ({
+        quantity: opt.quantity,
+        price: opt.price,
+        description: opt.description || `Curso #${index + 1}`
+      }));
+
       const res = await apiFetch('/api/raffles', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          ticketOptions: processedTicketOptions
+        }),
       });
 
       if (res.ok) {
@@ -200,12 +202,26 @@ export default function NewRafflePage() {
                         required
                       />
                     </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Descripción para Mercado Pago</label>
+                      <Input
+                        type="text"
+                        placeholder="Ej: Curso de Cocina Básica"
+                        value={opt.description || ''}
+                        onChange={(e) => setFormData(prev => {
+                          const newOpts = [...prev.ticketOptions];
+                          newOpts[idx] = { ...newOpts[idx], description: e.target.value || `Curso #${idx + 1}` };
+                          return { ...prev, ticketOptions: newOpts };
+                        })}
+                        className="h-12 rounded-xl"
+                      />
+                    </div>
                     <Button type="button" variant="ghost" className="h-10 w-10" onClick={() => setFormData(prev => ({ ...prev, ticketOptions: prev.ticketOptions.filter((_, i) => i !== idx) }))}>
                       ✕
                     </Button>
                   </div>
                 ))}
-                <Button type="button" variant="outline" onClick={() => setFormData(prev => ({ ...prev, ticketOptions: [...prev.ticketOptions, { quantity: 0, price: 0 }] }))} className="w-full">
+                <Button type="button" variant="outline" onClick={() => setFormData(prev => ({ ...prev, ticketOptions: [...prev.ticketOptions, { quantity: 0, price: 0, description: `Curso #${prev.ticketOptions.length + 1}`} ] }))} className="w-full">
                   + Agregar Opción
                 </Button>
               </div>

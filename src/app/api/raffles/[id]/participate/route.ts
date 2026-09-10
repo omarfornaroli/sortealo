@@ -37,18 +37,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ message: 'No hay suficientes tickets disponibles' }, { status: 400 });
     }
 
-    // 2. Buscar Vendedor si existe el código
-    let sellerInfo = { sellerId: undefined, sellerName: 'Venta General' };
-    if (sellerCode) {
-      const seller = await Seller.findOne({ code: sellerCode, active: true });
-      if (seller) {
-        sellerInfo = {
-          sellerId: seller._id.toString(),
-          sellerName: seller.name
-        };
-      }
-    }
-
     // 3. Obtener todos los tickets vendidos para evitar duplicados
     // Usamos una consulta rápida para traer solo los tickets
     const raffleForTickets = await Raffle.findById(id).select('participants.tickets').lean();
@@ -74,7 +62,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       phone: phone.trim(),
       tickets: generatedTickets,
       purchaseDate: new Date(),
-      ...sellerInfo,
+      sellerCode,
       acceptedTerms: !!acceptedTerms
     };
 

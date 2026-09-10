@@ -18,6 +18,7 @@ export interface IPayment extends Document {
     merchant_order_id?: string;
     preference_id?: string;
     collection_status?: string;
+    sellerCode?: string; // Código del vendedor que generó la venta
     createdAt: Date;
     updatedAt: Date;
     participant_added?: boolean; // Flag para saber si ya se agregó como participante
@@ -45,6 +46,7 @@ const PaymentSchema: Schema = new Schema({
     merchant_order_id: { type: String },
     preference_id: { type: String },
     collection_status: { type: String },
+    sellerCode: { type: String },
     participant_added: { type: Boolean, default: false },
 }, { timestamps: true });
 

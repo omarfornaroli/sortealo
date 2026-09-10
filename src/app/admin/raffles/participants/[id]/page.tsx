@@ -35,15 +35,29 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
   const [filterTicket, setFilterTicket] = useState('');
   const [filterSeller, setFilterSeller] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sellerTableData, setSellerTableData] = useState<{ seller: string; count: unknown }[]>([]);
   const { toast } = useToast();
 
   const loadParticipants = async () => {
+    if(!sellers || sellers.length === 0) return;
     setRefreshing(true);
     try {
       const res = await apiFetch(`/api/raffles/${id}`);
       if (!res.ok) throw new Error('No se pudo cargar el sorteo');
       const data = await res.json();
       setRaffle(data);
+      // Compute ticket counts per seller for the table
+  const sellerStats = data?.participants?.reduce((acc: any, p: any) => {
+    const key = sellers.find(s => s.code === p.sellerCode)?.name || 'General';
+    acc[key] = (acc[key] || 0) + (p.tickets?.length || 0);
+    return acc;
+  }, {} as Record<string, number>) || {};
+
+  const sellerTableData = Object.entries(sellerStats)
+    .filter(([seller]) => !filterSeller || seller === filterSeller)
+    .map(([seller, count]) => ({ seller, count }))
+    .sort((a, b) => sortOrder === 'asc' ? a.count - b.count : b.count - a.count);
+  setSellerTableData(sellerTableData);
     } catch (err) {
       toast({ title: 'Error', description: 'Error al actualizar lista.', variant: 'destructive' });
     } finally {
@@ -54,7 +68,7 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
 
   useEffect(() => {
     loadParticipants();
-  }, [id]);
+  }, [id, sellers]);
 
   useEffect(() => {
     const loadSellers = async () => {
@@ -77,7 +91,7 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
       matches = matches && (
         p.email.toLowerCase().includes(search.toLowerCase()) ||
         p.name.toLowerCase().includes(search.toLowerCase()) ||
-        (p.sellerName && p.sellerName.toLowerCase().includes(search.toLowerCase())) ||
+        (p.sellerCode && p.sellerCode.toLowerCase().includes(search.toLowerCase())) ||
         (p.dni && p.dni.toString().includes(search))
       );
     }
@@ -89,28 +103,18 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
       matches = matches && p.tickets?.some((t: string) => t.includes(filterTicket));
     }
     if (filterSeller) {
-      matches = matches && p.sellerName === filterSeller;
+      matches = matches && p.sellerCode === filterSeller;
     }
     return matches;
   }) || [];
 
-  // Compute ticket counts per seller for the table
-  const sellerStats = raffle?.participants?.reduce((acc: any, p: any) => {
-    const key = p.sellerName || 'Venta General';
-    acc[key] = (acc[key] || 0) + (p.tickets?.length || 0);
-    return acc;
-  }, {} as Record<string, number>) || {};
-
-  const sellerTableData = Object.entries(sellerStats)
-    .filter(([seller]) => !filterSeller || seller === filterSeller)
-    .map(([seller, count]) => ({ seller, count }))
-    .sort((a, b) => sortOrder === 'asc' ? a.count - b.count : b.count - a.count);
+  
 
   const handleExportCSV = () => {
     if (!raffle?.participants?.length) return;
     const headers = ["Nombre", "Email", "DNI", "Telefono", "Tickets", "Vendedor", "Fecha"];
     const rows = raffle.participants.map((p: any) => [
-      `"${p.name}"`, `"${p.email}"`, `"${p.dni}"`, `"${p.phone}"`, `"${p.tickets?.join('|')}"`, `"${p.sellerName || 'General'}"`, `"${new Date(p.purchaseDate).toLocaleDateString()}"`
+      `"${p.name}"`, `"${p.email}"`, `"${p.dni}"`, `"${p.phone}"`, `"${p.tickets?.join('|')}"`, `"${p.sellerCode || 'General'}"`, `"${new Date(p.purchaseDate).toLocaleDateString()}"`
     ]);
     const csvContent = "\uFEFF" + [headers, ...rows].map(e => e.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -251,9 +255,9 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
                     </td>
                     <td className="px-10 py-7">
                       <div className="flex items-center gap-2">
-                        <Badge variant={p.sellerName === 'Venta General' ? 'outline' : 'default'} className="rounded-lg px-3 py-1 font-bold">
+                        <Badge variant={p.sellerCode === undefined ? 'outline' : 'default'} className="rounded-lg px-3 py-1 font-bold">
                           <Store className="w-3 h-3 mr-1.5" />
-                          {p.sellerName || 'Venta General'}
+                          {sellers.find((s) => s.code === p.sellerCode)?.name || 'Venta General'}
                         </Badge>
                       </div>
                     </td>

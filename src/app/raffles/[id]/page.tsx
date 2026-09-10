@@ -114,6 +114,7 @@ function RaffleContent({ id }: { id: string }) {
           unitPrice: price,
           // Quantity is set to 1 for MercadoPago item; actual ticket count is tracked in metadata
           quantity,
+          ticketOption: selectedOption,
           user: { ...formData, sellerCode, acceptedTerms: !!termsAccepted }
         }),
       });

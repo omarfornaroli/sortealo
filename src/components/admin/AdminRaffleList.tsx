@@ -22,7 +22,7 @@ interface Raffle {
   imageUrl: string;
   participants: Participant[];
   isFinished: boolean;
-  ticketPrice: number;
+    ticketOptions: { quantity: number; price: number; description?: string }[];
   soldTickets: number;
   maxTickets: number;
   winnerEmail?: string;
@@ -85,7 +85,7 @@ export function AdminRaffleList({ initialRaffles }: { initialRaffles: Raffle[] }
             <CardTitle className="text-2xl font-headline font-bold line-clamp-1 text-slate-900 group-hover:text-primary transition-colors">{raffle.name}</CardTitle>
             <div className="flex items-center gap-3 mt-2">
               <span className="text-sm font-black text-primary bg-primary/5 px-4 py-1.5 rounded-xl border border-primary/10">
-                ${raffle.ticketPrice} / ticket
+                Desde ${raffle.ticketOptions?.at(-1)?.price || 0} 
               </span>
             </div>
           </CardHeader>

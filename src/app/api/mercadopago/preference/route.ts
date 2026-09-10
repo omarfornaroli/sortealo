@@ -1,4 +1,3 @@
-
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
@@ -9,7 +8,10 @@ const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN 
 
 export async function POST(req: NextRequest) {
   try {
-    const { raffleId, raffleName, unitPrice, quantity, user } = await req.json();
+    const { raffleId, raffleName, unitPrice, ticketOption, quantity, user } = await req.json();
+
+    console.log('[preference] Datos recibidos - user:', JSON.stringify(user));
+    console.log('[preference] sellerCode en user:', user?.sellerCode);
 
     if (!process.env.MP_ACCESS_TOKEN) {
       return NextResponse.json({ message: 'Mercado Pago access token not configured' }, { status: 500 });
@@ -26,6 +28,8 @@ export async function POST(req: NextRequest) {
     // Generar un UUID único para esta transacción
     const externalReference = randomUUID();
 
+    console.log('[preference] externalReference generado:', externalReference);
+
     // Mercado Pago requiere URLs absolutas y válidas.
     // Usamos la variable de entorno NEXT_PUBLIC_BASE_URL como base.
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
@@ -36,8 +40,8 @@ export async function POST(req: NextRequest) {
 
     const totalPrice = Number(unitPrice);
 
-    // Crear el registro de pago en la BD
-    await Payment.create({
+    // CREAR EL REGISTRO DE PAGO EN LA BD - CON sellerCode
+    const paymentData = {
       external_reference: externalReference,
       raffle_id: raffleId,
       raffle_name: raffleName,
@@ -45,12 +49,18 @@ export async function POST(req: NextRequest) {
       user_email: user.email,
       user_dni: user.dni,
       user_phone: user.phone,
+      sellerCode: user.sellerCode || undefined,
       quantity: quantity,
       unit_price: Number(unitPrice),
       total_price: totalPrice,
       currency: 'ARS',
       status: 'pending',
-    });
+    };
+
+    console.log('[preference] Guardando Payment en BD:', JSON.stringify(paymentData));
+    console.log('[preference] sellerCode que se guardará:', paymentData.sellerCode);
+
+    await Payment.create(paymentData);
 
     const preference = new Preference(client);
 
@@ -59,7 +69,7 @@ export async function POST(req: NextRequest) {
         items: [
           {
             id: raffleId,
-            title: `Sorteo: ${raffleName} (${quantity} chances)`,
+            title: ticketOption?.description || `Curso velas aromaticas chances`,
             quantity: 1,
             unit_price: Number(unitPrice),
             currency_id: 'ARS',
@@ -80,9 +90,13 @@ export async function POST(req: NextRequest) {
           user_dni: user.dni,
           user_phone: user.phone,
           quantity: quantity,
+          sellerCode: user.sellerCode || undefined
         }
       },
     });
+
+    console.log("title", ticketOption?.description || `Curso velas aromaticas chances`);
+    console.log('[preference] Respuesta Mercado Pago:', result?.init_point ? 'OK' : 'FAIL');
 
     if (!result.init_point) {
       throw new Error('No init_point returned from Mercado Pago');
@@ -99,6 +113,7 @@ export async function POST(req: NextRequest) {
         { external_reference: externalReference },
         updateData
       );
+      console.log('[preference] Payment actualizado con preference_id:', result.id);
     }
 
     return NextResponse.json({ init_point: result.init_point });

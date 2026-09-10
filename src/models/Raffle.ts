@@ -8,8 +8,7 @@ export interface IParticipant {
   tickets: string[];
   purchaseDate: Date;
   external_reference?: string;
-  sellerId?: string;
-  sellerName?: string;
+  sellerCode?: string;
   acceptedTerms?: boolean;
 }
 
@@ -42,6 +41,8 @@ export interface IRaffle extends Document {
     name: string;
     ticket: string;
   }[];
+  // Image used when sharing the raffle via WhatsApp
+  whatsappImageUrl?: string;
 }
 
 const ParticipantSchema = new Schema({
@@ -52,8 +53,7 @@ const ParticipantSchema = new Schema({
   tickets: [{ type: String }],
   purchaseDate: { type: Date, default: Date.now },
   external_reference: { type: String },
-  sellerId: { type: String },
-  sellerName: { type: String, default: 'Venta General' },
+  sellerCode: { type: String },
   acceptedTerms: { type: Boolean, default: false },
 }, { _id: false });
 
@@ -63,6 +63,7 @@ const RaffleSchema: Schema = new Schema({
   // The main prize image is now optional; individual prize images are stored in the `prizes` array.
   imageUrl: { type: String, required: false },
   winnersImageUrl: { type: String, required: false },
+  whatsappImageUrl: { type: String, required: false },
   participants: { type: [ParticipantSchema], default: [] },
   isFinished: { type: Boolean, default: false },
   isFeatured: { type: Boolean, default: false },

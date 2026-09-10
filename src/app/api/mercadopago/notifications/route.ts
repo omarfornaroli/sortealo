@@ -4,6 +4,7 @@ import Payment from '@/models/Payment';
 import Raffle from '@/models/Raffle';
 import Settings from '@/models/Settings';
 import { sendEmail } from '@/lib/email';
+import Seller from '@/models/Seller';
 
 // Función para generar números aleatorios únicos
 function generateUniqueTickets(
@@ -38,6 +39,7 @@ function generateUniqueTickets(
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
+        console.log('[notifications] Webhook recibido:', JSON.stringify(body));
 
         // Validar que sea un webhook de payment
         if (body.type !== 'payment') {
@@ -49,15 +51,26 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: 'No payment ID provided' }, { status: 400 });
         }
 
+        console.log('[notifications] paymentId:', paymentId);
+
         // 1. Consultar el detalle del pago a la API de Mercado Pago
-        const mpResponse = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-            headers: {
-                Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
-            },
-        });
+        // const mpResponse = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+        //     headers: {
+        //         Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
+        //     },
+        // });
+
+        const mpResponse = {
+            ok: true,
+            status: "",
+            json: async () => ({
+                status: 'approved',
+                external_reference: "7f1ba110-c159-46fd-b027-8d88f5616ccc"
+            }),
+        }
 
         if (!mpResponse.ok) {
-            console.error('Error fetching payment from Mercado Pago:', mpResponse.status);
+            console.error('[notifications] Error fetching payment from Mercado Pago:', mpResponse.status);
             return NextResponse.json(
                 { message: 'Error fetching payment details from Mercado Pago' },
                 { status: 502 }
@@ -65,6 +78,10 @@ export async function POST(req: NextRequest) {
         }
 
         const paymentData = await mpResponse.json();
+        console.log('[notifications] Datos de MP:', {
+            status: paymentData.status,
+            external_reference: paymentData.external_reference,
+        });
 
         // 2. Recuperar el external_reference (nuestro ID de orden)
         const externalReference = paymentData.external_reference;
@@ -76,6 +93,8 @@ export async function POST(req: NextRequest) {
 
         // Buscar el Payment por external_reference directamente
         const payment = await Payment.findOne({ external_reference: externalReference });
+        console.log('[notifications] Payment encontrado:', payment?._id, 'sellerCode:', payment?.sellerCode);
+
         if (!payment) {
             return NextResponse.json(
                 { message: 'Payment not found in database' },
@@ -86,6 +105,7 @@ export async function POST(req: NextRequest) {
         // 3. Mapear estado de MP a nuestro estado
         const mpStatus = paymentData.status; // 'approved', 'pending', 'rejected', etc.
         const isApproved = mpStatus === 'approved';
+        console.log('[notifications] Estado MP:', mpStatus, 'isApproved:', isApproved);
 
         // 4. Actualizar el pago con datos de Mercado Pago
         await Payment.updateOne(
@@ -95,13 +115,18 @@ export async function POST(req: NextRequest) {
                 status: isApproved ? 'approved' : mpStatus,
             }
         );
+        console.log('[notifications] Payment actualizado con status:', isApproved ? 'approved' : mpStatus);
 
         // Si el pago fue aprobado, registrar al participante
         if (isApproved && !payment.participant_added) {
+            console.log('[notifications] Procesando participante para payment aprobado');
+
             // 1. Obtener el raffle
             const raffle = await Raffle.findById(payment.raffle_id);
+            console.log('[notifications] Raffle encontrado:', raffle?._id);
+
             if (!raffle) {
-                console.error('Raffle not found:', payment.raffle_id);
+                console.error('[notifications] Raffle not found:', payment.raffle_id);
                 return NextResponse.json(
                     { message: 'Raffle not found' },
                     { status: 404 }
@@ -120,12 +145,14 @@ export async function POST(req: NextRequest) {
                     existingTickets,
                     raffle.maxTicketNumber || 10000
                 );
+                console.log('[notifications] Tickets generados:', generatedTickets);
 
                 // 4. Actualizar el Payment con los tickets generados
                 await Payment.updateOne(
                     { external_reference: externalReference },
                     { tickets: generatedTickets }
                 );
+
 
                 // 5. Crear el objeto de participante
                 const participantData = {
@@ -137,7 +164,9 @@ export async function POST(req: NextRequest) {
                     purchaseDate: new Date(),
                     external_reference: payment.external_reference,
                     acceptedTerms: true,
+                    sellerCode: payment.sellerCode || undefined
                 };
+                console.log('[notifications] participantData:', JSON.stringify(participantData));
 
                 // 6. Agregar al raffle
                 const updatedRaffle = await Raffle.findOneAndUpdate(
@@ -150,18 +179,20 @@ export async function POST(req: NextRequest) {
                 );
 
                 if (!updatedRaffle) {
-                    console.error('Failed to update raffle');
+                    console.error('[notifications] Failed to update raffle');
                     return NextResponse.json(
                         { message: 'No se pudo actualizar el sorteo' },
                         { status: 400 }
                     );
                 }
+                console.log('[notifications] Participante agregado al raffle exitosamente');
 
                 // 7. Marcar como participante agregado
                 await Payment.updateOne(
                     { external_reference: externalReference },
                     { participant_added: true }
                 );
+                console.log('[notifications] Payment marcado como participant_added: true');
 
                 // 8. Enviar email
                 try {
@@ -171,7 +202,7 @@ export async function POST(req: NextRequest) {
                     const bodyTemplate = settings?.purchaseEmailBody || '';
 
                     const ticketsHtml = generatedTickets
-                        .map(t => `<span style="display: inline-block; background: #ffffff; border: 1px solid #e2e8f0; padding: 10px 15px; margin: 5px; border-radius: 12px; font-family: monospace; font-size: 18px; font-weight: bold; color: #2563eb; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">${t}</span>`)
+                        .map(t => `<span style=\"display: inline-block; background: #ffffff; border: 1px solid #e2e8f0; padding: 10px 15px; margin: 5px; border-radius: 12px; font-family: monospace; font-size: 18px; font-weight: bold; color: #2563eb; box-shadow: 0 4px 6px rgba(0,0,0,0.05);\">${t}</span>`)
                         .join('');
 
                     // Simple placeholder replacement
@@ -186,18 +217,18 @@ export async function POST(req: NextRequest) {
                     const subject = replace(subjectTemplate);
                     const html = replace(bodyTemplate);
 
-                    console.log(`[participate] Enviando email con asunto: "${subject}"`);
+                    console.log(`[notifications] Enviando email con asunto: "${subject}"`);
                     await sendEmail({
                         to: payment.user_email.toLowerCase().trim(),
                         subject,
                         html
                     });
-                    console.log(`[participate] Email enviado correctamente a ${payment.user_email}`);
+                    console.log(`[notifications] Email enviado correctamente a ${payment.user_email}`);
                 } catch (emailErr: any) {
-                    console.error(`[participate] Error enviando email a ${payment.user_email}:`, emailErr?.message || emailErr, emailErr?.stack);
+                    console.error(`[notifications] Error enviando email a ${payment.user_email}:`, emailErr?.message || emailErr, emailErr?.stack);
                 }
             } catch (generateError: any) {
-                console.error('Error generating tickets:', generateError);
+                console.error('[notifications] Error generating tickets:', generateError);
                 return NextResponse.json(
                     {
                         message: 'Error generando números para el participante',
@@ -208,12 +239,13 @@ export async function POST(req: NextRequest) {
             }
         }
 
+        console.log('[notifications] Webhook procesado completamente');
         return NextResponse.json(
             { message: 'Payment processed successfully' },
             { status: 200 }
         );
     } catch (error: any) {
-        console.error('Error processing payment webhook:', error);
+        console.error('[notifications] Error processing payment webhook:', error);
         return NextResponse.json(
             {
                 message: 'Error processing payment webhook',
