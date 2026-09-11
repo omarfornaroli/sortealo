@@ -96,7 +96,7 @@ export default function SellersPage() {
       toast({ title: 'Atención', description: 'Primero selecciona un sorteo para generar el link.', variant: 'destructive' });
       return;
     }
-    const baseUrl = window.location.origin;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_PATH ? `${window.location.origin}${process.env.NEXT_PUBLIC_BASE_PATH}` : window.location.origin;
     const link = `${baseUrl}/raffles/${selectedRaffle}?ref=${sellerCode}`;
     navigator.clipboard.writeText(link);
     setCopiedId(sellerCode);
