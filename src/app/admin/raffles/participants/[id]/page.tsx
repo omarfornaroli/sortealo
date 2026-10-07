@@ -18,7 +18,10 @@ import {
   RefreshCcw, 
   Download,
   Users,
-  Store
+  Store,
+  DollarSign,
+  Ticket,
+  Tag
 } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -39,25 +42,29 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
   const { toast } = useToast();
 
   const loadParticipants = async () => {
-    if(!sellers || sellers.length === 0) return;
     setRefreshing(true);
     try {
       const res = await apiFetch(`/api/raffles/${id}`);
       if (!res.ok) throw new Error('No se pudo cargar el sorteo');
       const data = await res.json();
       setRaffle(data);
-      // Compute ticket counts per seller for the table
-  const sellerStats = data?.participants?.reduce((acc: any, p: any) => {
-    const key = sellers.find(s => s.code === p.sellerCode)?.name || 'General';
-    acc[key] = (acc[key] || 0) + (p.tickets?.length || 0);
-    return acc;
-  }, {} as Record<string, number>) || {};
 
-  const sellerTableData = Object.entries(sellerStats)
-    .filter(([seller]) => !filterSeller || seller === filterSeller)
-    .map(([seller, count]) => ({ seller, count }))
-    .sort((a, b) => sortOrder === 'asc' ? a.count - b.count : b.count - a.count);
-  setSellerTableData(sellerTableData);
+      if (sellers && sellers.length > 0) {
+        // Compute ticket counts per seller for the table
+        const sellerStats = data?.participants?.reduce((acc: any, p: any) => {
+          const key = sellers.find(s => s.code === p.sellerCode)?.name || 'General';
+          acc[key] = (acc[key] || 0) + (p.tickets?.length || 0);
+          return acc;
+        }, {} as Record<string, number>) || {};
+
+        const sellerTableData = Object.entries(sellerStats)
+          .filter(([seller]) => !filterSeller || seller === filterSeller)
+          .map(([seller, count]) => ({ seller, count }))
+          .sort((a, b) => sortOrder === 'asc' ? Number(a.count) - Number(b.count) : Number(b.count) - Number(a.count));
+        setSellerTableData(sellerTableData);
+      } else {
+        setSellerTableData([]);
+      }
     } catch (err) {
       toast({ title: 'Error', description: 'Error al actualizar lista.', variant: 'destructive' });
     } finally {
@@ -108,8 +115,6 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
     return matches;
   }) || [];
 
-  
-
   const handleExportCSV = () => {
     if (!raffle?.participants?.length) return;
     const headers = ["Nombre", "Email", "DNI", "Telefono", "Tickets", "Vendedor", "Fecha"];
@@ -123,6 +128,78 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
     link.download = `participantes_${raffle.name}.csv`;
     link.click();
   };
+
+  const optionsStats = (() => {
+    if (!raffle) return { optionBreakdown: [], totalRevenue: 0 };
+
+    const participants = raffle.participants || [];
+    const options = raffle.ticketOptions && raffle.ticketOptions.length > 0
+      ? raffle.ticketOptions
+      : null;
+
+    if (options) {
+      const breakdown = options.map((opt: any) => ({
+        quantity: Number(opt.quantity),
+        price: Number(opt.price),
+        description: opt.description,
+        salesCount: 0,
+        ticketsSold: 0,
+        revenue: 0,
+      }));
+
+      let unmappedSales = 0;
+      let unmappedTickets = 0;
+      let unmappedRevenue = 0;
+
+      participants.forEach((p: any) => {
+        const pQty = p.tickets?.length || 0;
+        const matchedIdx = breakdown.findIndex((b: any) => b.quantity === pQty);
+
+        if (matchedIdx !== -1) {
+          breakdown[matchedIdx].salesCount += 1;
+          breakdown[matchedIdx].ticketsSold += pQty;
+          breakdown[matchedIdx].revenue += breakdown[matchedIdx].price;
+        } else {
+          unmappedSales += 1;
+          unmappedTickets += pQty;
+          unmappedRevenue += pQty * (Number(raffle.ticketPrice) || 0);
+        }
+      });
+
+      const totalRevenue = breakdown.reduce((acc: number, item: any) => acc + item.revenue, 0) + unmappedRevenue;
+
+      if (unmappedSales > 0) {
+        breakdown.push({
+          quantity: 0,
+          price: Number(raffle.ticketPrice) || 0,
+          description: 'Otros / Precio Base',
+          salesCount: unmappedSales,
+          ticketsSold: unmappedTickets,
+          revenue: unmappedRevenue,
+        });
+      }
+
+      return { optionBreakdown: breakdown, totalRevenue };
+    } else {
+      const unitPrice = Number(raffle.ticketPrice) || 0;
+      const totalTickets = Number(raffle.soldTickets) || 0;
+      const totalRevenue = totalTickets * unitPrice;
+
+      return {
+        optionBreakdown: [
+          {
+            quantity: 1,
+            price: unitPrice,
+            description: 'Ticket Individual',
+            salesCount: participants.length,
+            ticketsSold: totalTickets,
+            revenue: totalRevenue,
+          }
+        ],
+        totalRevenue
+      };
+    }
+  })();
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-screen">
@@ -154,43 +231,123 @@ export default function ParticipantsPage({ params }: { params: Promise<{ id: str
           <h1 className="text-5xl font-headline font-bold text-slate-900 mb-2">{raffle.name}</h1>
           <p className="text-slate-500 text-lg">Control de tickets y asignación de vendedores.</p>
           
-          <div className="flex flex-wrap gap-6 mt-10">
-            <div className="bg-primary/5 px-8 py-5 rounded-[2rem] border border-primary/10 min-w-[200px]">
-              <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Ventas Totales</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
+            <div className="bg-primary/5 p-6 rounded-[2.5rem] border border-primary/10">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] font-black text-primary uppercase tracking-widest">Ventas Totales</p>
+                <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                  <Ticket className="w-4 h-4" />
+                </div>
+              </div>
               <p className="font-black text-slate-900 text-4xl">{raffle.soldTickets}</p>
+              <p className="text-xs text-slate-400 font-bold mt-2">Tickets asignados</p>
             </div>
-            <div className="bg-slate-50 px-8 py-5 rounded-[2rem] border border-slate-100 min-w-[200px]">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Compradores</p>
+
+            <div className="bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Compradores</p>
+                <div className="w-8 h-8 rounded-xl bg-slate-200/60 flex items-center justify-center text-slate-600">
+                  <Users className="w-4 h-4" />
+                </div>
+              </div>
               <p className="font-black text-slate-900 text-4xl">{raffle.participants?.length || 0}</p>
+              <p className="text-xs text-slate-400 font-bold mt-2">Registros de compra</p>
+            </div>
+
+            <div className="bg-emerald-500/10 p-6 rounded-[2.5rem] border border-emerald-500/20">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Ganancia Total</p>
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-700">
+                  <DollarSign className="w-4 h-4" />
+                </div>
+              </div>
+              <p className="font-black text-emerald-950 text-4xl">
+                ${optionsStats.totalRevenue.toLocaleString('es-AR')}
+              </p>
+              <p className="text-xs text-emerald-700 font-bold mt-2">Recaudación estimada</p>
             </div>
           </div>
-          {/* Tabla de tickets por vendedor */}
-          <div className="mt-8">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50">
-                  <th className="px-4 py-2">Vendedor</th>
-                  <th className="px-4 py-2 flex items-center justify-between">
-                    <span>Tickets Vendidos</span>
-                    <button
-                      onClick={() => setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))}
-                      className="text-sm text-slate-500"
-                    >
-                      {sortOrder === 'asc' ? '↑' : '↓'}
-                    </button>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {sellerTableData.map(({ seller, count }) => (
-                  <tr key={seller} className="border-t border-slate-200">
-                    <td className="px-4 py-2">{seller}</td>
-                    <td className="px-4 py-2">{count}</td>
-                  </tr>
+
+          {/* Desglose de tickets vendidos por precio configurado */}
+          {optionsStats.optionBreakdown.length > 0 && (
+            <div className="mt-8 pt-8 border-t border-slate-100">
+              <div className="flex items-center gap-2 mb-4">
+                <Tag className="w-4 h-4 text-primary" />
+                <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest">
+                  Ventas por Precios Configurados
+                </h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {optionsStats.optionBreakdown.map((opt: any, idx: number) => (
+                  <div key={idx} className="bg-slate-50 p-5 rounded-[2rem] border border-slate-100 hover:border-primary/30 transition-all">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <span className="inline-block bg-primary/10 text-primary font-black text-xs px-3 py-1 rounded-xl uppercase tracking-wider mb-1">
+                          {opt.quantity > 0 ? `${opt.quantity} ${opt.quantity === 1 ? 'Ticket' : 'Tickets'}` : 'Personalizado'}
+                        </span>
+                        {opt.description && (
+                          <p className="text-xs text-slate-500 font-bold truncate max-w-[150px]" title={opt.description}>
+                            {opt.description}
+                          </p>
+                        )}
+                      </div>
+                      <span className="font-black text-slate-900 text-lg">
+                        ${opt.price.toLocaleString('es-AR')}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5 pt-3 border-t border-slate-200/60 text-xs">
+                      <div className="flex justify-between text-slate-600 font-medium">
+                        <span>Paquetes vendidos:</span>
+                        <span className="font-black text-slate-900">{opt.salesCount}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-600 font-medium">
+                        <span>Tickets entregados:</span>
+                        <span className="font-black text-primary">{opt.ticketsSold}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-800 font-bold pt-2 border-t border-slate-200/40">
+                        <span>Subtotal recaudado:</span>
+                        <span className="font-black text-emerald-700">${opt.revenue.toLocaleString('es-AR')}</span>
+                      </div>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tabla de tickets por vendedor */}
+          {sellerTableData.length > 0 && (
+            <div className="mt-8 pt-8 border-t border-slate-100">
+              <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">
+                Ventas por Vendedor
+              </h3>
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50">
+                    <th className="px-4 py-2 font-bold text-slate-600 text-xs uppercase">Vendedor</th>
+                    <th className="px-4 py-2 flex items-center justify-between font-bold text-slate-600 text-xs uppercase">
+                      <span>Tickets Vendidos</span>
+                      <button
+                        onClick={() => setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'))}
+                        className="text-xs text-slate-500 font-bold"
+                      >
+                        {sortOrder === 'asc' ? '↑ Asc' : '↓ Desc'}
+                      </button>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sellerTableData.map(({ seller, count }) => (
+                    <tr key={seller} className="border-t border-slate-200 text-sm">
+                      <td className="px-4 py-2 font-semibold text-slate-800">{seller}</td>
+                      <td className="px-4 py-2 font-black text-slate-900">{String(count)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
 
